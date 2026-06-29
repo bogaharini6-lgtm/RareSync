@@ -8,7 +8,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Health Check Route
+// Health Check
 app.get('/', (req, res) => {
   res.json({
     message: 'RareSync API is running',
@@ -17,8 +17,10 @@ app.get('/', (req, res) => {
   });
 });
 
-// Routes — will be added from Day 2 onwards
-// app.use('/api/auth', require('./routes/auth'));
+// Routes
+app.use('/api/auth', require('./routes/auth'));
+
+// Day 3+ routes (uncomment as you build)
 // app.use('/api/patients', require('./routes/patients'));
 // app.use('/api/diseases', require('./routes/diseases'));
 // app.use('/api/records', require('./routes/records'));
