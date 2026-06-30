@@ -21,7 +21,7 @@ app.get('/', (req, res) => {
 app.use('/api/auth', require('./routes/auth'));
 
 // Day 3+ routes (uncomment as you build)
-// app.use('/api/patients', require('./routes/patients'));
+ app.use('/api/patients', require('./routes/patients'));
 // app.use('/api/diseases', require('./routes/diseases'));
 // app.use('/api/records', require('./routes/records'));
 // app.use('/api/access', require('./routes/access'));
