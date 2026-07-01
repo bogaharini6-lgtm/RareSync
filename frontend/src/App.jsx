@@ -5,6 +5,7 @@ import DoctorDashboard from './pages/DoctorDashboard';
 import HospitalDashboard from './pages/HospitalDashboard';
 import PatientsPage from './pages/PatientsPage';
 import PatientDetailPage from './pages/PatientDetailPage';
+import DiseasesPage from './pages/DiseasesPage';
 
 const PrivateRoute = ({ children }) => {
   const { user } = useAuth();
@@ -16,38 +17,11 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route
-        path="/doctor/dashboard"
-        element={
-          <PrivateRoute>
-            <DoctorDashboard />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/hospital/dashboard"
-        element={
-          <PrivateRoute>
-            <HospitalDashboard />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/patients"
-        element={
-          <PrivateRoute>
-            <PatientsPage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/patients/:id"
-        element={
-          <PrivateRoute>
-            <PatientDetailPage />
-          </PrivateRoute>
-        }
-      />
+      <Route path="/doctor/dashboard" element={<PrivateRoute><DoctorDashboard /></PrivateRoute>} />
+      <Route path="/hospital/dashboard" element={<PrivateRoute><HospitalDashboard /></PrivateRoute>} />
+      <Route path="/patients" element={<PrivateRoute><PatientsPage /></PrivateRoute>} />
+      <Route path="/patients/:id" element={<PrivateRoute><PatientDetailPage /></PrivateRoute>} />
+      <Route path="/diseases" element={<PrivateRoute><DiseasesPage /></PrivateRoute>} />
       <Route path="*" element={<Navigate to="/login" />} />
     </Routes>
   );
