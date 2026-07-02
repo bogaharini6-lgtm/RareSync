@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import API from '../api/axios';
+import MedicalRecordsTab from './MedicalRecordsTab';
 
 export default function PatientDetailPage() {
   const { id } = useParams();
@@ -13,7 +14,6 @@ export default function PatientDetailPage() {
   const [form, setForm] = useState({});
   const [error, setError] = useState('');
 
-  // Disease states
   const [patientDiseases, setPatientDiseases] = useState([]);
   const [allDiseases, setAllDiseases] = useState([]);
   const [showLinkForm, setShowLinkForm] = useState(false);
@@ -54,9 +54,7 @@ export default function PatientDetailPage() {
     fetchAllDiseases();
   }, [id]);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -96,18 +94,14 @@ export default function PatientDetailPage() {
     }
   };
 
-  if (error) {
-    return (
-      <div style={{ padding: 32, fontFamily: 'Arial' }}>
-        <p style={{ color: 'red' }}>{error}</p>
-        <button onClick={() => navigate('/patients')}>Back to Patients</button>
-      </div>
-    );
-  }
+  if (error) return (
+    <div style={{ padding: 32, fontFamily: 'Arial' }}>
+      <p style={{ color: 'red' }}>{error}</p>
+      <button onClick={() => navigate('/patients')}>Back to Patients</button>
+    </div>
+  );
 
-  if (!patient) {
-    return <div style={{ padding: 32, fontFamily: 'Arial' }}>Loading...</div>;
-  }
+  if (!patient) return <div style={{ padding: 32, fontFamily: 'Arial' }}>Loading...</div>;
 
   return (
     <div style={styles.page}>
@@ -120,16 +114,19 @@ export default function PatientDetailPage() {
       </div>
 
       <div style={styles.container}>
-
         {/* Patient Header */}
         <div style={styles.headerRow}>
-          <h2 style={{ margin: 0 }}>{patient.name}</h2>
+          <div>
+            <h2 style={{ margin: 0 }}>{patient.name}</h2>
+            <span style={styles.genderBadge}>{patient.gender || 'Unknown'}</span>
+            {patient.blood_group && <span style={styles.bloodBadge}>{patient.blood_group}</span>}
+          </div>
           <button onClick={() => setIsEditing(!isEditing)} style={styles.editBtn}>
             {isEditing ? 'Cancel' : 'Edit Patient'}
           </button>
         </div>
 
-        {/* Patient Info */}
+        {/* Patient Info / Edit Form */}
         {!isEditing ? (
           <div style={styles.card}>
             <DetailRow label="Date of Birth" value={patient.dob ? new Date(patient.dob).toLocaleDateString() : '-'} />
@@ -168,7 +165,6 @@ export default function PatientDetailPage() {
             )}
           </div>
 
-          {/* Link Disease Form — doctors only */}
           {showLinkForm && user?.role === 'doctor' && (
             <form onSubmit={handleLinkDisease} style={styles.linkForm}>
               <select
@@ -192,17 +188,16 @@ export default function PatientDetailPage() {
                 rows={2}
               />
               {linkError && <p style={styles.error}>{linkError}</p>}
-              <button type="submit" style={styles.saveBtn}>Link Disease</button>
+              <button type="submit" style={{ ...styles.saveBtn, marginTop: 10 }}>Link Disease</button>
             </form>
           )}
 
-          {/* Linked Diseases List */}
           {patientDiseases.length === 0 ? (
-            <p style={{ color: '#999', fontSize: 14 }}>No rare diseases linked to this patient yet.</p>
+            <p style={{ color: '#999', fontSize: 14 }}>No rare diseases linked yet.</p>
           ) : (
             patientDiseases.map((pd) => (
               <div key={pd.id} style={styles.diseaseItem}>
-                <div style={styles.diseaseItemLeft}>
+                <div>
                   <p style={styles.diseaseItemName}>{pd.disease_name}</p>
                   {pd.icd_code && <span style={styles.icdBadge}>ICD: {pd.icd_code}</span>}
                   <p style={styles.diseaseItemMeta}>
@@ -211,21 +206,16 @@ export default function PatientDetailPage() {
                   {pd.notes && <p style={styles.diseaseItemNotes}>Notes: {pd.notes}</p>}
                 </div>
                 {user?.role === 'doctor' && (
-                  <button onClick={() => handleUnlink(pd.id, pd.disease_name)} style={styles.unlinkBtn}>
-                    Remove
-                  </button>
+                  <button onClick={() => handleUnlink(pd.id, pd.disease_name)} style={styles.unlinkBtn}>Remove</button>
                 )}
               </div>
             ))
           )}
         </div>
 
-        {/* Medical Records placeholder */}
+        {/* Medical Records Section */}
         <div style={styles.section}>
-          <div style={styles.sectionHeader}>
-            <h3 style={{ margin: 0 }}>Medical Records</h3>
-          </div>
-          <p style={{ color: '#999', fontSize: 14 }}>Coming Day 5 — diagnosis, prescriptions, treatment notes, visit history</p>
+          <MedicalRecordsTab patientId={parseInt(id)} />
         </div>
 
       </div>
@@ -245,43 +235,32 @@ function DetailRow({ label, value }) {
 const styles = {
   page: { fontFamily: 'Arial, sans-serif', background: '#f7f9fc', minHeight: '100vh' },
   topBar: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '16px 32px',
-    background: '#fff',
-    borderBottom: '1px solid #e5e5e5',
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    padding: '16px 32px', background: '#fff', borderBottom: '1px solid #e5e5e5',
   },
   logo: { color: '#2c7be5', margin: 0, fontSize: 22 },
   topRight: { display: 'flex', gap: 12 },
   backBtn: {
-    padding: '8px 16px',
-    background: '#fff',
-    border: '1px solid #ddd',
-    borderRadius: 6,
-    cursor: 'pointer',
-    fontSize: 13,
+    padding: '8px 16px', background: '#fff', border: '1px solid #ddd',
+    borderRadius: 6, cursor: 'pointer', fontSize: 13,
   },
   navBtn: {
-    padding: '8px 16px',
-    background: '#f0f4ff',
-    border: '1px solid #2c7be5',
-    color: '#2c7be5',
-    borderRadius: 6,
-    cursor: 'pointer',
-    fontSize: 13,
+    padding: '8px 16px', background: '#f0f4ff', border: '1px solid #2c7be5',
+    color: '#2c7be5', borderRadius: 6, cursor: 'pointer', fontSize: 13,
   },
   container: { padding: '24px 32px', maxWidth: 860, margin: '0 auto' },
   headerRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  genderBadge: {
+    display: 'inline-block', background: '#f0f4ff', color: '#2c7be5',
+    padding: '2px 10px', borderRadius: 12, fontSize: 12, marginRight: 8, marginTop: 4,
+  },
+  bloodBadge: {
+    display: 'inline-block', background: '#fff0f0', color: '#e53e3e',
+    padding: '2px 10px', borderRadius: 12, fontSize: 12, marginTop: 4,
+  },
   editBtn: {
-    padding: '8px 18px',
-    background: '#2c7be5',
-    color: '#fff',
-    border: 'none',
-    borderRadius: 6,
-    cursor: 'pointer',
-    fontSize: 13,
-    fontWeight: 'bold',
+    padding: '8px 18px', background: '#2c7be5', color: '#fff', border: 'none',
+    borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 'bold',
   },
   card: { background: '#fff', padding: 20, borderRadius: 8, border: '1px solid #eee', marginBottom: 20 },
   row: { display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f0f0f0' },
@@ -289,72 +268,34 @@ const styles = {
   rowValue: { color: '#222', fontSize: 14, fontWeight: '500' },
   formGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 },
   input: {
-    padding: '10px 12px',
-    borderRadius: 6,
-    border: '1px solid #ddd',
-    fontSize: 14,
-    boxSizing: 'border-box',
-    width: '100%',
+    padding: '10px 12px', borderRadius: 6, border: '1px solid #ddd',
+    fontSize: 14, boxSizing: 'border-box', width: '100%',
   },
   saveBtn: {
-    padding: '10px 20px',
-    background: '#22c55e',
-    color: '#fff',
-    border: 'none',
-    borderRadius: 6,
-    cursor: 'pointer',
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginTop: 8,
+    padding: '10px 20px', background: '#22c55e', color: '#fff', border: 'none',
+    borderRadius: 6, cursor: 'pointer', fontSize: 14, fontWeight: 'bold',
   },
-  section: {
-    background: '#fff',
-    padding: 20,
-    borderRadius: 8,
-    border: '1px solid #eee',
-    marginBottom: 20,
-  },
+  section: { background: '#fff', padding: 20, borderRadius: 8, border: '1px solid #eee', marginBottom: 20 },
   sectionHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   addBtn: {
-    padding: '8px 16px',
-    background: '#2c7be5',
-    color: '#fff',
-    border: 'none',
-    borderRadius: 6,
-    cursor: 'pointer',
-    fontSize: 13,
-    fontWeight: 'bold',
+    padding: '8px 16px', background: '#2c7be5', color: '#fff', border: 'none',
+    borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 'bold',
   },
   linkForm: { background: '#f7f9fc', padding: 16, borderRadius: 8, marginBottom: 16 },
   error: { color: '#e53e3e', fontSize: 13, marginTop: 8 },
   diseaseItem: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    padding: '12px 0',
-    borderBottom: '1px solid #f0f0f0',
+    display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+    padding: '12px 0', borderBottom: '1px solid #f0f0f0',
   },
-  diseaseItemLeft: { flex: 1 },
   diseaseItemName: { fontWeight: 'bold', fontSize: 15, color: '#222', margin: '0 0 4px 0' },
   diseaseItemMeta: { color: '#888', fontSize: 12, margin: '4px 0' },
   diseaseItemNotes: { color: '#555', fontSize: 13, margin: '4px 0', fontStyle: 'italic' },
   icdBadge: {
-    display: 'inline-block',
-    background: '#e8f0fe',
-    color: '#2c7be5',
-    padding: '2px 10px',
-    borderRadius: 12,
-    fontSize: 12,
+    display: 'inline-block', background: '#e8f0fe', color: '#2c7be5',
+    padding: '2px 10px', borderRadius: 12, fontSize: 12,
   },
   unlinkBtn: {
-    padding: '6px 14px',
-    background: '#fff',
-    color: '#e53e3e',
-    border: '1px solid #e53e3e',
-    borderRadius: 5,
-    cursor: 'pointer',
-    fontSize: 12,
-    marginLeft: 12,
-    flexShrink: 0,
+    padding: '6px 14px', background: '#fff', color: '#e53e3e',
+    border: '1px solid #e53e3e', borderRadius: 5, cursor: 'pointer', fontSize: 12, marginLeft: 12,
   },
 };
