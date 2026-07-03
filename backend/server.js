@@ -17,9 +17,7 @@ app.use('/api/diseases', require('./routes/diseases'));
 app.use('/api/records', require('./routes/records'));
 app.use('/api/access', require('./routes/access'));
 app.use('/api/audit', require('./routes/audit'));
-
-// Day 7
-// app.use('/api/dashboard', require('./routes/dashboard'));
+app.use('/api/dashboard', require('./routes/dashboard'));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
