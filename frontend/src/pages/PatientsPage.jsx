@@ -197,4 +197,12 @@ const styles = {
     borderRadius: 5, cursor: 'pointer', fontSize: 12, marginRight: 8,
   },
   deleteBtn: {
-    padding: '6px 14px', background: '#fff', color: '#e53e3e', border: '1px solid #e53e3e',
+    padding: '6px 14px',
+    background: '#fff',
+    color: '#e53e3e',
+    border: '1px solid #e53e3e',
+    borderRadius: 5,
+    cursor: 'pointer',
+    fontSize: 12,
+  },
+};

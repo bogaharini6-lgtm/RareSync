@@ -10,6 +10,7 @@ const verifyToken = (req, res, next) => {
 
   jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
     if (err) {
+      console.log('JWT ERROR:', err.message);
       return res.status(403).json({ message: 'Invalid or expired token.' });
     }
     req.user = decoded; // { id, role: 'doctor' | 'hospital', hospital_id }
