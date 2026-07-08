@@ -1,7 +1,11 @@
-import { useState, useEffect } from 'react';
+  import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import API from '../api/axios';
+import {
+  RecordsByTypeChart,
+  MonthlyPatientsChart,
+} from '../components/DashboardCharts';
 
 const STATUS_STYLES = {
   Pending:  { bg: '#fffbeb', color: '#d97706' },
@@ -35,10 +39,13 @@ export default function DoctorDashboard() {
   }, []);
 
   if (loading) return (
-    <div style={{ padding: 32, fontFamily: 'Arial' }}>Loading dashboard...</div>
+    <div style={{ padding: 32, fontFamily: 'Arial' }}>
+      <h2 style={{ color: '#2c7be5' }}>RareSync</h2>
+      <p>Loading dashboard...</p>
+    </div>
   );
 
-  const { stats, recent_patients } = data || {};
+  const { stats, records_by_type, monthly_patients, recent_patients } = data || {};
 
   return (
     <div style={styles.page}>
@@ -55,6 +62,7 @@ export default function DoctorDashboard() {
       </div>
 
       <div style={styles.container}>
+        {/* Header */}
         <div style={styles.headerRow}>
           <div>
             <h2 style={{ margin: 0 }}>Doctor Dashboard</h2>
@@ -63,18 +71,27 @@ export default function DoctorDashboard() {
             </p>
           </div>
           <span style={styles.dateBadge}>
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            {new Date().toLocaleDateString('en-US', {
+              weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            })}
           </span>
         </div>
 
         {/* Stats */}
         <div style={styles.statsGrid}>
-          <StatCard label="Total Patients" value={stats?.patients} emoji="👤" color="#2c7be5" bg="#f0f4ff" onClick={() => navigate('/patients')} />
-          <StatCard label="Rare Diseases" value={stats?.diseases} emoji="🧬" color="#7c3aed" bg="#f9f0ff" onClick={() => navigate('/diseases')} />
-          <StatCard label="Medical Records" value={stats?.records} emoji="📋" color="#22c55e" bg="#f0fff4" />
-          <StatCard label="My Access Requests" value={myRequests.length} emoji="🔐" color="#d97706" bg="#fffbeb" onClick={() => navigate('/access-requests')} />
+          <StatCard label="Total Patients"     value={stats?.patients}    emoji="👤" color="#2c7be5" bg="#f0f4ff" onClick={() => navigate('/patients')} />
+          <StatCard label="Rare Diseases"      value={stats?.diseases}    emoji="🧬" color="#7c3aed" bg="#f9f0ff" onClick={() => navigate('/diseases')} />
+          <StatCard label="Medical Records"    value={stats?.records}     emoji="📋" color="#22c55e" bg="#f0fff4" />
+          <StatCard label="My Access Requests" value={myRequests.length}  emoji="🔐" color="#d97706" bg="#fffbeb" onClick={() => navigate('/access-requests')} />
         </div>
 
+        {/* Charts */}
+        <div style={styles.chartsGrid}>
+          <MonthlyPatientsChart data={monthly_patients} />
+          <RecordsByTypeChart data={records_by_type} />
+        </div>
+
+        {/* Bottom Row */}
         <div style={styles.twoCol}>
           {/* Recent Patients */}
           <div style={styles.panel}>
@@ -82,10 +99,10 @@ export default function DoctorDashboard() {
               <h3 style={{ margin: 0 }}>Recent Patients</h3>
               <button onClick={() => navigate('/patients')} style={styles.seeAllBtn}>See All</button>
             </div>
-            {recent_patients?.length === 0 ? (
+            {!recent_patients?.length ? (
               <p style={{ color: '#999', fontSize: 14 }}>No patients yet.</p>
             ) : (
-              recent_patients?.map((p) => (
+              recent_patients.map((p) => (
                 <div key={p.id} onClick={() => navigate(`/patients/${p.id}`)} style={styles.patientRow}>
                   <div style={styles.patientAvatar}>{p.name.charAt(0).toUpperCase()}</div>
                   <div style={{ flex: 1 }}>
@@ -119,7 +136,6 @@ export default function DoctorDashboard() {
                     <div style={{ flex: 1 }}>
                       <p style={styles.requestPatient}>{r.patient_name}</p>
                       <p style={styles.requestHospital}>{r.hospital_name}</p>
-                      {r.reason && <p style={styles.requestReason}>{r.reason}</p>}
                     </div>
                     <span style={{ ...styles.statusBadge, background: st.bg, color: st.color }}>
                       {r.status}
@@ -135,10 +151,10 @@ export default function DoctorDashboard() {
         <div style={styles.panel}>
           <h3 style={{ margin: '0 0 16px 0' }}>Quick Actions</h3>
           <div style={styles.quickGrid}>
-            <QuickAction label="Add Patient" emoji="➕" desc="Register a new patient" onClick={() => navigate('/patients')} color="#2c7be5" />
-            <QuickAction label="View Diseases" emoji="🧬" desc="Browse rare diseases" onClick={() => navigate('/diseases')} color="#7c3aed" />
-            <QuickAction label="Request Access" emoji="🔐" desc="Request patient access" onClick={() => navigate('/access-requests')} color="#d97706" />
-            <QuickAction label="Add Disease" emoji="📝" desc="Add a new rare disease" onClick={() => navigate('/diseases')} color="#22c55e" />
+            <QuickAction label="Add Patient"    emoji="➕" desc="Register a new patient"    onClick={() => navigate('/patients')}        color="#2c7be5" />
+            <QuickAction label="View Diseases"  emoji="🧬" desc="Browse rare diseases"      onClick={() => navigate('/diseases')}        color="#7c3aed" />
+            <QuickAction label="Request Access" emoji="🔐" desc="Request patient access"    onClick={() => navigate('/access-requests')} color="#d97706" />
+            <QuickAction label="Add Disease"    emoji="📝" desc="Add a new rare disease"    onClick={() => navigate('/diseases')}        color="#22c55e" />
           </div>
         </div>
 
@@ -197,8 +213,12 @@ const styles = {
   },
   container: { padding: '24px 32px', maxWidth: 1200, margin: '0 auto' },
   headerRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
-  dateBadge: { color: '#888', fontSize: 13, background: '#fff', padding: '8px 14px', borderRadius: 8, border: '1px solid #eee' },
+  dateBadge: {
+    color: '#888', fontSize: 13, background: '#fff',
+    padding: '8px 14px', borderRadius: 8, border: '1px solid #eee',
+  },
   statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 },
+  chartsGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 },
   twoCol: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 },
   panel: { background: '#fff', borderRadius: 10, padding: 20, border: '1px solid #eee', marginBottom: 16 },
   panelHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
@@ -224,7 +244,6 @@ const styles = {
   },
   requestPatient: { fontWeight: '600', fontSize: 14, color: '#222', margin: 0 },
   requestHospital: { color: '#888', fontSize: 12, margin: '2px 0 0 0' },
-  requestReason: { color: '#999', fontSize: 12, margin: '4px 0 0 0', fontStyle: 'italic' },
   statusBadge: { padding: '3px 10px', borderRadius: 12, fontSize: 11, fontWeight: 'bold', flexShrink: 0 },
   requestBtn: {
     marginTop: 10, padding: '8px 16px', background: '#2c7be5', color: '#fff',
