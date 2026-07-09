@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
+import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import DoctorDashboard from './pages/DoctorDashboard';
 import HospitalDashboard from './pages/HospitalDashboard';
@@ -18,6 +20,7 @@ const PrivateRoute = ({ children }) => {
 function AppRoutes() {
   return (
     <Routes>
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/doctor/dashboard" element={<PrivateRoute><DoctorDashboard /></PrivateRoute>} />
       <Route path="/hospital/dashboard" element={<PrivateRoute><HospitalDashboard /></PrivateRoute>} />
@@ -26,18 +29,20 @@ function AppRoutes() {
       <Route path="/diseases" element={<PrivateRoute><DiseasesPage /></PrivateRoute>} />
       <Route path="/access-requests" element={<PrivateRoute><AccessRequestsPage /></PrivateRoute>} />
       <Route path="/audit-logs" element={<PrivateRoute><AuditLogsPage /></PrivateRoute>} />
-      <Route path="*" element={<Navigate to="/login" />} />
+      <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );
 }
 
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
