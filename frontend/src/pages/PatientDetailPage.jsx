@@ -1,3 +1,4 @@
+import Navbar from '../components/Navbar';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -105,13 +106,7 @@ export default function PatientDetailPage() {
 
   return (
     <div style={styles.page}>
-      <div style={styles.topBar}>
-        <h1 style={styles.logo}>RareSync</h1>
-        <div style={styles.topRight}>
-          <button onClick={() => navigate('/patients')} style={styles.backBtn}>← Patients</button>
-          <button onClick={() => navigate('/diseases')} style={styles.navBtn}>Diseases</button>
-        </div>
-      </div>
+     <Navbar />
 
       <div style={styles.container}>
         {/* Patient Header */}

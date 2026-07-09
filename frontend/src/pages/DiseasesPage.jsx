@@ -1,3 +1,4 @@
+import Navbar from '../components/Navbar';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -59,14 +60,7 @@ export default function DiseasesPage() {
 
   return (
     <div style={styles.page}>
-      <div style={styles.topBar}>
-        <h1 style={styles.logo}>RareSync</h1>
-        <div style={styles.topRight}>
-          <span style={styles.userName}>{user?.name}</span>
-          <button onClick={() => navigate('/patients')} style={styles.navBtn}>Patients</button>
-          <button onClick={handleLogout} style={styles.logoutBtn}>Logout</button>
-        </div>
-      </div>
+      <Navbar />
 
       <div style={styles.container}>
         <div style={styles.headerRow}>

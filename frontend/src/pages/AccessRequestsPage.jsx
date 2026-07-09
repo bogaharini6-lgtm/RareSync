@@ -1,3 +1,4 @@
+import Navbar from '../components/Navbar';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -94,18 +95,7 @@ export default function AccessRequestsPage() {
   return (
     <div style={styles.page}>
       {/* Top Bar */}
-      <div style={styles.topBar}>
-        <h1 style={styles.logo}>RareSync</h1>
-        <div style={styles.topRight}>
-          <span style={styles.userName}>{user?.name}</span>
-          <button onClick={() => navigate('/patients')} style={styles.navBtn}>Patients</button>
-          <button onClick={() => navigate('/diseases')} style={styles.navBtn}>Diseases</button>
-          {user?.role === 'hospital' && (
-            <button onClick={() => navigate('/audit-logs')} style={styles.navBtn}>Audit Logs</button>
-          )}
-          <button onClick={handleLogout} style={styles.logoutBtn}>Logout</button>
-        </div>
-      </div>
+      <Navbar />
 
       <div style={styles.container}>
         <div style={styles.headerRow}>
