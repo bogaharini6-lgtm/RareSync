@@ -123,23 +123,41 @@ export default function PatientsPage() {
                 <th style={styles.th}>Contact</th>
                 <th style={styles.th}>Blood Group</th>
                 <th style={styles.th}>Added On</th>
+                <th style={styles.th}>Access</th>
                 <th style={styles.th}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {patients.map((p) => (
-                <tr key={p.id} style={styles.tr}>
-                  <td style={styles.td}>{p.name}</td>
-                  <td style={styles.td}>{p.gender || '-'}</td>
-                  <td style={styles.td}>{p.contact || '-'}</td>
-                  <td style={styles.td}>{p.blood_group || '-'}</td>
-                  <td style={styles.td}>{new Date(p.created_at).toLocaleDateString()}</td>
-                  <td style={styles.td}>
-                    <button onClick={() => navigate(`/patients/${p.id}`)} style={styles.viewBtn}>View</button>
-                    <button onClick={() => handleDelete(p.id, p.name)} style={styles.deleteBtn}>Delete</button>
-                  </td>
-                </tr>
-              ))}
+  <tr key={p.id} style={styles.tr}>
+    <td style={styles.td}>{p.name}</td>
+    <td style={styles.td}>{p.gender || '-'}</td>
+    <td style={styles.td}>{p.contact || '-'}</td>
+    <td style={styles.td}>{p.blood_group || '-'}</td>
+    <td style={styles.td}>{new Date(p.created_at).toLocaleDateString()}</td>
+    <td style={styles.td}>
+      <span style={{
+        display: 'inline-block',
+        padding: '2px 8px',
+        borderRadius: 10,
+        fontSize: 10,
+        fontWeight: 700,
+        marginRight: 8,
+        background: p.access_level === 'full' ? 'var(--gbg)' : 'var(--obg)',
+        color: p.access_level === 'full' ? 'var(--green)' : 'var(--orange)',
+        border: `1px solid ${p.access_level === 'full' ? 'var(--gborder)' : 'var(--oborder)'}`,
+      }}>
+        {p.access_level === 'full' ? 'Full' : 'Limited'}
+      </span>
+    </td>
+    <td style={styles.td}>
+      <button onClick={() => navigate(`/patients/${p.id}`)} style={styles.viewBtn}>View</button>
+      {user?.role === 'hospital' && (
+        <button onClick={() => handleDelete(p.id, p.name)} style={styles.deleteBtn}>Delete</button>
+      )}
+    </td>
+  </tr>
+))}
             </tbody>
           </table>
         )}
