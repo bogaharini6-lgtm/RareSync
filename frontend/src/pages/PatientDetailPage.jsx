@@ -334,7 +334,7 @@ export default function PatientDetailPage() {
 
             {/* MEDICAL RECORDS */}
             <div style={styles.section}>
-              <MedicalRecordsTab patientId={parseInt(id)} />
+              <MedicalRecordsTab patientId={parseInt(id)} patientDiseases={patientDiseases} />
             </div>
           </>
         )}
