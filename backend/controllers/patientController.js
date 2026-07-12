@@ -1,9 +1,3 @@
-const sendEmail = require('../utils/sendEmail');
-const templates = require('../utils/emailTemplates');
-const db = require('../config/db');
-const { logAudit } = require('./auditController');
-
-// ─── ADD PATIENT ─────────────────────────────────────────────
 const db = require('../config/db');
 const { logAudit } = require('./auditController');
 const sendEmail = require('../utils/sendEmail');
@@ -52,7 +46,6 @@ exports.addPatient = async (req, res) => {
 };
 
 // ─── GET ALL PATIENTS (with search) ──────────────────────────
-// Doctors see limited info unless they have access
 exports.getPatients = async (req, res) => {
   const hospital_id = req.user.role === 'hospital' ? req.user.id : req.user.hospital_id;
   const search = req.query.search || '';
@@ -66,14 +59,11 @@ exports.getPatients = async (req, res) => {
       [hospital_id, `%${search}%`, `%${search}%`]
     );
 
-    // For doctors: mark which patients they have full access to
     if (req.user.role === 'doctor') {
       const [approvedRequests] = await db.execute(
-        `SELECT patient_id FROM access_requests 
-         WHERE doctor_id = ? AND status = 'Approved'`,
+        `SELECT patient_id FROM access_requests WHERE doctor_id = ? AND status = 'Approved'`,
         [req.user.id]
       );
-
       const [ownRecords] = await db.execute(
         `SELECT DISTINCT patient_id FROM medical_records WHERE doctor_id = ?`,
         [req.user.id]
@@ -84,24 +74,19 @@ exports.getPatients = async (req, res) => {
         ...ownRecords.map((r) => r.patient_id),
       ]);
 
-      const patientsWithAccess = rows.map((p) => ({
+      return res.json(rows.map((p) => ({
         ...p,
         access_level: approvedIds.has(p.id) ? 'full' : 'limited',
-      }));
-
-      return res.json(patientsWithAccess);
+      })));
     }
 
-    // Hospital sees everything
-    const patientsWithAccess = rows.map((p) => ({ ...p, access_level: 'full' }));
-    res.json(patientsWithAccess);
+    res.json(rows.map((p) => ({ ...p, access_level: 'full' })));
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
 // ─── GET SINGLE PATIENT ───────────────────────────────────────
-// accessLevel set by checkPatientAccess middleware
 exports.getPatientById = async (req, res) => {
   const patient = req.patient;
   const accessLevel = req.accessLevel;
@@ -109,7 +94,6 @@ exports.getPatientById = async (req, res) => {
   await logAudit(req.user, 'record_viewed', 'patient', patient.id, `Viewed patient ${patient.name}`);
 
   if (accessLevel === 'limited') {
-    // Return only basic info
     return res.json({
       id: patient.id,
       name: patient.name,
@@ -118,7 +102,6 @@ exports.getPatientById = async (req, res) => {
     });
   }
 
-  // Full access
   res.json({ ...patient, access_level: 'full' });
 };
 
@@ -133,9 +116,7 @@ exports.updatePatient = async (req, res) => {
 
   try {
     await db.execute(
-      `UPDATE patients 
-       SET name=?, dob=?, gender=?, contact=?, address=?, blood_group=?, emergency_contact=? 
-       WHERE id=?`,
+      `UPDATE patients SET name=?, dob=?, gender=?, contact=?, address=?, blood_group=?, emergency_contact=? WHERE id=?`,
       [name, dob || null, gender || null, contact, address, blood_group, emergency_contact, req.params.id]
     );
     await logAudit(req.user, 'patient_updated', 'patient', req.params.id, `Patient ${name} updated`);
