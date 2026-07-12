@@ -1,5 +1,13 @@
+const sendEmail = require('../utils/sendEmail');
+const templates = require('../utils/emailTemplates');
 const db = require('../config/db');
 const { logAudit } = require('./auditController');
+
+// ─── ADD PATIENT ─────────────────────────────────────────────
+const db = require('../config/db');
+const { logAudit } = require('./auditController');
+const sendEmail = require('../utils/sendEmail');
+const templates = require('../utils/emailTemplates');
 
 // ─── ADD PATIENT ─────────────────────────────────────────────
 exports.addPatient = async (req, res) => {
@@ -10,12 +18,33 @@ exports.addPatient = async (req, res) => {
 
   try {
     const [result] = await db.execute(
-      `INSERT INTO patients 
-       (hospital_id, name, dob, gender, contact, address, blood_group, emergency_contact) 
-       VALUES (?,?,?,?,?,?,?,?)`,
+      `INSERT INTO patients (hospital_id, name, dob, gender, contact, address, blood_group, emergency_contact) VALUES (?,?,?,?,?,?,?,?)`,
       [hospital_id, name, dob || null, gender || null, contact, address, blood_group, emergency_contact]
     );
+
     await logAudit(req.user, 'patient_created', 'patient', result.insertId, `Patient ${name} added`);
+
+    // Notify hospital when a doctor adds a patient
+    if (req.user.role === 'doctor') {
+      const [hospitals] = await db.execute('SELECT name, email FROM hospitals WHERE id = ?', [hospital_id]);
+      const [doctors] = await db.execute('SELECT name FROM doctors WHERE id = ?', [req.user.id]);
+
+      if (hospitals.length && doctors.length) {
+        sendEmail({
+          to: hospitals[0].email,
+          subject: `New patient added — ${name}`,
+          html: templates.patientAdded({
+            hospitalName: hospitals[0].name,
+            doctorName: doctors[0].name,
+            patientName: name,
+            gender,
+            bloodGroup: blood_group,
+            addedAt: new Date(),
+          }),
+        });
+      }
+    }
+
     res.status(201).json({ message: 'Patient added successfully.', id: result.insertId });
   } catch (err) {
     res.status(500).json({ message: err.message });
