@@ -16,7 +16,7 @@ const checkPatientAccess = async (req, res, next) => {
 
     const patient = patients[0];
 
-    // ─── HOSPITAL: owns the patient ──────────────────────────
+    // ─── HOSPITAL ────────────────────────────────────────────
     if (user.role === 'hospital') {
       if (patient.hospital_id !== user.id) {
         return res.status(403).json({ message: 'This patient does not belong to your hospital.' });
@@ -28,26 +28,8 @@ const checkPatientAccess = async (req, res, next) => {
 
     // ─── DOCTOR ──────────────────────────────────────────────
     if (user.role === 'doctor') {
-      const hospital_id = user.hospital_id;
 
-      // Patient must belong to same hospital
-      if (patient.hospital_id !== hospital_id) {
-        return res.status(403).json({ message: 'You do not have access to patients outside your hospital.' });
-      }
-
-      // Check if doctor added this patient (always full access)
-      const [records] = await db.execute(
-        'SELECT id FROM medical_records WHERE patient_id = ? AND doctor_id = ? LIMIT 1',
-        [patient_id, user.id]
-      );
-
-      if (records.length > 0) {
-        req.patient = patient;
-        req.accessLevel = 'full';
-        return next();
-      }
-
-      // Check if doctor has an approved access request
+      // Check approved access request from ANY hospital
       const [approved] = await db.execute(
         `SELECT id FROM access_requests 
          WHERE doctor_id = ? AND patient_id = ? AND status = 'Approved'`,
@@ -60,7 +42,19 @@ const checkPatientAccess = async (req, res, next) => {
         return next();
       }
 
-      // No access — return limited info only
+      // Check if doctor has own records for this patient
+      const [ownRecords] = await db.execute(
+        'SELECT id FROM medical_records WHERE patient_id = ? AND doctor_id = ? LIMIT 1',
+        [patient_id, user.id]
+      );
+
+      if (ownRecords.length > 0) {
+        req.patient = patient;
+        req.accessLevel = 'full';
+        return next();
+      }
+
+      // No access — limited view
       req.patient = patient;
       req.accessLevel = 'limited';
       return next();
