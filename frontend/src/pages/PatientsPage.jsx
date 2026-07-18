@@ -191,12 +191,12 @@ export default function PatientsPage() {
 
 function PatientCard({ patient, userRole, requestingId, onView, onRequestAccess, onDelete }) {
   const isRequesting = requestingId === patient.id;
-
-  const accessConfig = {
-    approved: { label: 'Access Approved', color: 'var(--green)', bg: 'var(--gbg)', border: 'var(--gborder)' },
-    pending:  { label: 'Pending Approval', color: 'var(--orange)', bg: 'var(--obg)', border: 'var(--oborder)' },
-    none:     { label: 'No Access', color: 'var(--text3)', bg: 'var(--bg3)', border: 'var(--border2)' },
-  };
+const accessConfig = {
+  assigned: { label: 'Your Patient', color: 'var(--accent)', bg: 'var(--bg4)', border: 'var(--border2)' },
+  approved: { label: 'Access Approved', color: 'var(--green)', bg: 'var(--gbg)', border: 'var(--gborder)' },
+  pending:  { label: 'Pending Approval', color: 'var(--orange)', bg: 'var(--obg)', border: 'var(--oborder)' },
+  none:     { label: 'No Access', color: 'var(--text3)', bg: 'var(--bg3)', border: 'var(--border2)' },
+};
 
   const ac = accessConfig[patient.access_status] || accessConfig.none;
 
