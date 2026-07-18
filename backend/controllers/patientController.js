@@ -117,22 +117,33 @@ exports.getPatients = async (req, res) => {
       }
 
       const isAssignedDoctor = p.created_by_doctor === doctor_id;
-      const hasOwnRecords = ownRecordIds.has(p.id);
-      const isApproved = approvedIds.has(p.id);
-      const isPending = pendingIds.has(p.id) && !isAssignedDoctor && !hasOwnRecords && !isApproved;
+const hasOwnRecords = ownRecordIds.has(p.id);
+const isApproved = approvedIds.has(p.id);
+const isPending = pendingIds.has(p.id) && !isAssignedDoctor && !hasOwnRecords && !isApproved;
 
-      let access_level = 'limited';
-      let access_status = 'none';
+let access_level = 'limited';
+let access_status = 'none';
 
-      if (isAssignedDoctor || hasOwnRecords) {
-        access_level = 'full';
-        access_status = 'assigned';
-      } else if (isApproved) {
-        access_level = 'full';
-        access_status = 'approved';
-      } else if (isPending) {
-        access_status = 'pending';
-      }
+// Full access ONLY if:
+// 1. Doctor created this patient
+// 2. Doctor has posted records for this patient
+// 3. Doctor has an approved access request
+if (isAssignedDoctor || hasOwnRecords) {
+  access_level = 'full';
+  access_status = 'assigned';
+} else if (isApproved) {
+  access_level = 'full';
+  access_status = 'approved';
+} else if (isPending) {
+  // Pending — same hospital or different hospital
+  access_level = 'limited';
+  access_status = 'pending';
+} else {
+  // No access — show Request Access button
+  // Same hospital doctors also need to request access
+  access_level = 'limited';
+  access_status = 'none';
+}
 
       return {
         id: p.id,

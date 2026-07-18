@@ -38,13 +38,12 @@ const checkPatientAccess = async (req, res, next) => {
         return next();
       }
 
-      // Rule 2: Doctor who has posted ANY medical record for this patient
+      // Rule 2: Doctor who posted ANY medical record for this patient
       const [ownRecords] = await db.execute(
         `SELECT id FROM medical_records 
          WHERE patient_id = ? AND doctor_id = ? LIMIT 1`,
         [patient_id, user.id]
       );
-
       if (ownRecords.length > 0) {
         req.patient = patient;
         req.accessLevel = 'full';
@@ -57,14 +56,15 @@ const checkPatientAccess = async (req, res, next) => {
          WHERE doctor_id = ? AND patient_id = ? AND status = 'Approved'`,
         [user.id, patient_id]
       );
-
       if (approved.length > 0) {
         req.patient = patient;
         req.accessLevel = 'full';
         return next();
       }
 
-      // Rule 4: No access → limited view
+      // Rule 4: All other doctors — limited view
+      // This includes doctors from the SAME hospital
+      // who have not created the patient or posted records
       req.patient = patient;
       req.accessLevel = 'limited';
       return next();
