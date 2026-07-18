@@ -16,7 +16,7 @@ const checkPatientAccess = async (req, res, next) => {
 
     const patient = patients[0];
 
-    // ─── HOSPITAL ────────────────────────────────────────────
+    // ── HOSPITAL: must own the patient ───────────────────────
     if (user.role === 'hospital') {
       if (patient.hospital_id !== user.id) {
         return res.status(403).json({ message: 'This patient does not belong to your hospital.' });
@@ -26,35 +26,29 @@ const checkPatientAccess = async (req, res, next) => {
       return next();
     }
 
-    // ─── DOCTOR ──────────────────────────────────────────────
+    // ── DOCTOR ───────────────────────────────────────────────
     if (user.role === 'doctor') {
 
-      // Check approved access request from ANY hospital
+      // Rule 1: Assigned doctor always has full access
+      if (patient.created_by_doctor === user.id) {
+        req.patient = patient;
+        req.accessLevel = 'full';
+        return next();
+      }
+
+      // Rule 2: Approved access request
       const [approved] = await db.execute(
         `SELECT id FROM access_requests 
          WHERE doctor_id = ? AND patient_id = ? AND status = 'Approved'`,
         [user.id, patient_id]
       );
-
       if (approved.length > 0) {
         req.patient = patient;
         req.accessLevel = 'full';
         return next();
       }
 
-      // Check if doctor has own records for this patient
-      const [ownRecords] = await db.execute(
-        'SELECT id FROM medical_records WHERE patient_id = ? AND doctor_id = ? LIMIT 1',
-        [patient_id, user.id]
-      );
-
-      if (ownRecords.length > 0) {
-        req.patient = patient;
-        req.accessLevel = 'full';
-        return next();
-      }
-
-      // No access — limited view
+      // Rule 3: Pending or no access → limited
       req.patient = patient;
       req.accessLevel = 'limited';
       return next();
