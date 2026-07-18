@@ -84,10 +84,7 @@ exports.getPatients = async (req, res) => {
       [doctor_id]
     );
 
-    const approvedIds = new Set([
-      ...approvedRequests.map((r) => r.patient_id),
-      ...ownRecords.map((r) => r.patient_id),
-    ]);
+    const approvedIds = new Set(approvedRequests.map((r) => r.patient_id));
     const pendingIds = new Set(pendingRequests.map((r) => r.patient_id));
     const ownRecordIds = new Set(ownRecords.map((r) => r.patient_id));
 
@@ -119,22 +116,25 @@ exports.getPatients = async (req, res) => {
      const isAssignedDoctor = p.created_by_doctor === doctor_id;
 const hasOwnRecords = ownRecordIds.has(p.id);
 const isApproved = approvedIds.has(p.id);
-const isPending = pendingIds.has(p.id) && !isAssignedDoctor && !hasOwnRecords && !isApproved;
+const isPending = pendingIds.has(p.id);
 
 let access_level = 'limited';
 let access_status = 'none';
 
-// Full access ONLY if:
-// 1. Doctor created this patient
-// 2. Doctor has posted records for this patient
-// 3. Doctor has an approved access request
-if (isAssignedDoctor || hasOwnRecords || isApproved) {
+if (isAssignedDoctor || hasOwnRecords) {
+  // Doctor created patient OR posted records — always full
   access_level = 'full';
-  access_status = isAssignedDoctor || hasOwnRecords ? 'assigned' : 'approved';
+  access_status = 'assigned';
+} else if (isApproved) {
+  // Hospital approved the access request — full access
+  access_level = 'full';
+  access_status = 'approved';
 } else if (isPending) {
+  // Request submitted but not yet approved
   access_level = 'limited';
   access_status = 'pending';
 } else {
+  // No relationship — limited + show Request Access button
   access_level = 'limited';
   access_status = 'none';
 }
