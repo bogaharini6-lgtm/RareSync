@@ -36,28 +36,24 @@ exports.getPatients = async (req, res) => {
       return res.json(rows.map((p) => ({ ...p, access_level: 'full', access_status: 'approved' })));
     }
 
-    const doctor_id = req.user.id;
+    const doctor_id = Number(req.user.id);
 
-    const [approvedRequests] = await db.execute(
+    const [approvedRows] = await db.execute(
       "SELECT patient_id FROM access_requests WHERE doctor_id = ? AND status = 'Approved'",
       [doctor_id]
     );
-    const [pendingRequests] = await db.execute(
+    const [pendingRows] = await db.execute(
       "SELECT patient_id FROM access_requests WHERE doctor_id = ? AND status = 'Pending'",
       [doctor_id]
     );
-    const [ownRecords] = await db.execute(
+    const [recordRows] = await db.execute(
       'SELECT DISTINCT patient_id FROM medical_records WHERE doctor_id = ?',
       [doctor_id]
     );
 
-    console.log('doctor_id:', doctor_id);
-    console.log('approvedRequests:', approvedRequests);
-    console.log('ownRecords:', ownRecords);
-
-    const approvedIds = new Set(approvedRequests.map((r) => Number(r.patient_id)));
-    const pendingIds = new Set(pendingRequests.map((r) => Number(r.patient_id)));
-    const ownRecordIds = new Set(ownRecords.map((r) => Number(r.patient_id)));
+    const approvedIds = new Set(approvedRows.map((r) => Number(r.patient_id)));
+    const pendingIds = new Set(pendingRows.map((r) => Number(r.patient_id)));
+    const ownRecordIds = new Set(recordRows.map((r) => Number(r.patient_id)));
 
     const [rows] = await db.execute(
       'SELECT p.id, p.name, p.dob, p.gender, p.hospital_id, p.created_at, p.created_by_doctor, h.name AS hospital_name, GROUP_CONCAT(DISTINCT rd.name SEPARATOR ", ") AS disease_names FROM patients p JOIN hospitals h ON p.hospital_id = h.id LEFT JOIN patient_diseases pd ON pd.patient_id = p.id LEFT JOIN rare_diseases rd ON rd.id = pd.disease_id WHERE (p.name LIKE ? OR h.name LIKE ?) GROUP BY p.id ORDER BY p.created_at DESC',
@@ -75,15 +71,15 @@ exports.getPatients = async (req, res) => {
       }
 
       const pid = Number(p.id);
-      const isAssignedDoctor = Number(p.created_by_doctor) === doctor_id;
-      const hasOwnRecords = ownRecordIds.has(pid);
+      const isPrimary = Number(p.created_by_doctor) === doctor_id;
+      const hasOwnRec = ownRecordIds.has(pid);
       const isApproved = approvedIds.has(pid);
       const isPending = pendingIds.has(pid);
 
       let access_level = 'limited';
       let access_status = 'none';
 
-      if (isAssignedDoctor || hasOwnRecords) {
+      if (isPrimary || hasOwnRec) {
         access_level = 'full';
         access_status = 'assigned';
       } else if (isApproved) {
@@ -94,7 +90,19 @@ exports.getPatients = async (req, res) => {
         access_status = 'pending';
       }
 
-      return { id: pid, name: p.name, age, gender: p.gender, hospital_name: p.hospital_name, hospital_id: p.hospital_id, disease_names: p.disease_names || null, created_at: p.created_at, created_by_doctor: p.created_by_doctor, access_level, access_status };
+      return {
+        id: pid,
+        name: p.name,
+        age,
+        gender: p.gender,
+        hospital_name: p.hospital_name,
+        hospital_id: Number(p.hospital_id),
+        disease_names: p.disease_names || null,
+        created_at: p.created_at,
+        created_by_doctor: p.created_by_doctor ? Number(p.created_by_doctor) : null,
+        access_level,
+        access_status,
+      };
     });
 
     res.json(result);
