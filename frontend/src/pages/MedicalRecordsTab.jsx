@@ -40,8 +40,7 @@ const TYPE_CONFIG = {
     icon: '🏥',
   },
 };
-
-export default function MedicalRecordsTab({ patientId, patientDiseases = [] }) {
+   export default function MedicalRecordsTab({ patientId, patientDiseases = [], accessLevel = 'full' }) {
   const { user } = useAuth();
   const [records, setRecords] = useState([]);
   const [activeTab, setActiveTab] = useState('all');
@@ -63,28 +62,34 @@ export default function MedicalRecordsTab({ patientId, patientDiseases = [] }) {
   });
 
   const fetchRecords = async () => {
-    setLoading(true);
-    setAccessDenied(false);
-    try {
-      const url = activeTab === 'all'
-        ? `/records/patient/${patientId}`
-        : `/records/patient/${patientId}?type=${activeTab}`;
-      const { data } = await API.get(url);
-      setRecords(data);
-    } catch (err) {
-      if (err.response?.status === 403) {
-        setAccessDenied(true);
-      } else {
-        setError('Failed to load records.');
-      }
-    } finally {
-      setLoading(false);
+  // Don't even try to fetch if we know access is limited
+  if (accessLevel === 'limited') {
+    setAccessDenied(true);
+    setLoading(false);
+    return;
+  }
+  setLoading(true);
+  setAccessDenied(false);
+  try {
+    const url = activeTab === 'all'
+      ? `/records/patient/${patientId}`
+      : `/records/patient/${patientId}?type=${activeTab}`;
+    const { data } = await API.get(url);
+    setRecords(data);
+  } catch (err) {
+    if (err.response?.status === 403) {
+      setAccessDenied(true);
+    } else {
+      setError('Failed to load records.');
     }
-  };
+  } finally {
+    setLoading(false);
+  }
+};
 
-  useEffect(() => {
-    fetchRecords();
-  }, [patientId, activeTab]);
+useEffect(() => {
+  fetchRecords();
+}, [patientId, activeTab, accessLevel]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
