@@ -105,7 +105,35 @@ exports.linkPatientToDisease = async (req, res) => {
 
 // ─── GET DISEASES FOR A PATIENT ──────────────────────────────
 exports.getPatientDiseases = async (req, res) => {
+  const patient_id = req.params.patient_id;
+  const user = req.user;
+
   try {
+    // For doctors — check access
+    if (user.role === 'doctor') {
+      const [patient] = await db.execute(
+        'SELECT created_by_doctor FROM patients WHERE id = ?',
+        [patient_id]
+      );
+
+      const isPrimary = patient.length > 0 && Number(patient[0].created_by_doctor) === Number(user.id);
+
+      if (!isPrimary) {
+        const [ownRec] = await db.execute(
+          'SELECT id FROM medical_records WHERE patient_id = ? AND doctor_id = ? LIMIT 1',
+          [patient_id, user.id]
+        );
+        const [approved] = await db.execute(
+          "SELECT id FROM access_requests WHERE doctor_id = ? AND patient_id = ? AND status = 'Approved'",
+          [user.id, patient_id]
+        );
+
+        if (ownRec.length === 0 && approved.length === 0) {
+          return res.json([]); // return empty instead of error
+        }
+      }
+    }
+
     const [rows] = await db.execute(
       `SELECT pd.*, rd.name AS disease_name, rd.icd_code, rd.description,
               d.name AS doctor_name
@@ -114,7 +142,7 @@ exports.getPatientDiseases = async (req, res) => {
        JOIN doctors d ON pd.diagnosed_by = d.id
        WHERE pd.patient_id = ?
        ORDER BY pd.diagnosed_at DESC`,
-      [req.params.patient_id]
+      [patient_id]
     );
     res.json(rows);
   } catch (err) {
