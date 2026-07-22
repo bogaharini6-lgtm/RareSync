@@ -3,20 +3,29 @@ const { logAudit } = require('./auditController');
 
 // ─── CHECK IF DOCTOR HAS ACCESS TO PATIENT ───────────────────
 const hasAccess = async (doctorId, patientId) => {
-  // Check approved access request
+  // Rule 1: Primary doctor who created the patient
+  const [patient] = await db.execute(
+    'SELECT created_by_doctor FROM patients WHERE id = ?',
+    [patientId]
+  );
+  if (patient.length > 0 && Number(patient[0].created_by_doctor) === Number(doctorId)) {
+    return true;
+  }
+
+  // Rule 2: Doctor posted medical records for this patient
+  const [ownRecords] = await db.execute(
+    'SELECT id FROM medical_records WHERE patient_id = ? AND doctor_id = ? LIMIT 1',
+    [patientId, doctorId]
+  );
+  if (ownRecords.length > 0) return true;
+
+  // Rule 3: Approved access request
   const [approved] = await db.execute(
     `SELECT id FROM access_requests 
      WHERE doctor_id = ? AND patient_id = ? AND status = 'Approved'`,
     [doctorId, patientId]
   );
   if (approved.length > 0) return true;
-
-  // Check if doctor has own records for this patient
-  const [ownRecords] = await db.execute(
-    'SELECT id FROM medical_records WHERE patient_id = ? AND doctor_id = ? LIMIT 1',
-    [patientId, doctorId]
-  );
-  if (ownRecords.length > 0) return true;
 
   return false;
 };
