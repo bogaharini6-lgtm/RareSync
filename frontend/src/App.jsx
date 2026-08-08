@@ -10,6 +10,7 @@ import PatientDetailPage from './pages/PatientDetailPage';
 import DiseasesPage from './pages/DiseasesPage';
 import AccessRequestsPage from './pages/AccessRequestsPage';
 import AuditLogsPage from './pages/AuditLogsPage';
+import ProfilePage from './pages/ProfilePage';
 
 const PrivateRoute = ({ children }) => {
   const { user } = useAuth();
@@ -30,6 +31,7 @@ function AppRoutes() {
       <Route path="/access-requests" element={<PrivateRoute><AccessRequestsPage /></PrivateRoute>} />
       <Route path="/audit-logs" element={<PrivateRoute><AuditLogsPage /></PrivateRoute>} />
       <Route path="*" element={<Navigate to="/" />} />
+      <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
     </Routes>
   );
 }
