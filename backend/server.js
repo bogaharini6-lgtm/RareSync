@@ -18,6 +18,7 @@ app.use('/api/records', require('./routes/records'));
 app.use('/api/access', require('./routes/access'));
 app.use('/api/audit', require('./routes/audit'));
 app.use('/api/dashboard', require('./routes/dashboard'));
+app.use('/api/profile', require('./routes/profile'));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
