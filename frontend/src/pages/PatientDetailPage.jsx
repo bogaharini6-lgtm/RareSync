@@ -335,10 +335,10 @@ export default function PatientDetailPage() {
             {/* MEDICAL RECORDS */}
             <div style={styles.section}>
               <MedicalRecordsTab 
-  patientId={parseInt(id)} 
-  patientDiseases={patientDiseases}
-  accessLevel={accessLevel}
-/>
+              patientId={parseInt(id)} 
+                 patientDiseases={patientDiseases}
+                   accessLevel={accessLevel}
+                 />
             </div>
           </>
         )}
