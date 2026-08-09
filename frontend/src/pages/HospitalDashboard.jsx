@@ -92,9 +92,9 @@ export default function HospitalDashboard() {
         {/* Stats Grid */}
         <div style={styles.statsGrid}>
           <StatCard label="Total Patients"      value={stats?.patients}         emoji="👤" color="#2c7be5" bg="#f0f4ff" onClick={() => navigate('/patients')} />
-          <StatCard label="Total Doctors"       value={stats?.doctors}          emoji="👨‍⚕️" color="#7c3aed" bg="#f9f0ff" />
+          <StatCard label="Total Doctors"   value={stats?.doctors} emoji="👨‍⚕️" color="#7c3aed" bg="#f9f0ff" onClick={() => navigate('/doctors')} />
           <StatCard label="Rare Diseases"       value={stats?.diseases}         emoji="🧬" color="#d97706" bg="#fffbeb" onClick={() => navigate('/diseases')} />
-          <StatCard label="Medical Records"     value={stats?.records}          emoji="📋" color="#22c55e" bg="#f0fff4" />
+          <StatCard label="Medical Records" value={stats?.records} emoji="📋"  color="#22c55e" bg="#f0fff4" onClick={() => navigate('/patients')} />
           <StatCard label="Pending Requests"    value={stats?.pending_requests} emoji="🔐" color="#e53e3e" bg="#fff0f0" onClick={() => navigate('/access-requests')} />
           <StatCard label="New This Month"      value={stats?.new_patients}     emoji="🆕" color="#0891b2" bg="#f0fdff" />
         </div>
