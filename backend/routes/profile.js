@@ -8,5 +8,6 @@ router.use(verifyToken);
 router.get('/', ctrl.getProfile);
 router.put('/update', ctrl.updateProfile);
 router.put('/change-password', ctrl.changePassword);
+router.put('/change-email', ctrl.updateEmail);
 
 module.exports = router;
