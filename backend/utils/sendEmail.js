@@ -3,7 +3,7 @@ const transporter = require('../config/mailer');
 const sendEmail = async ({ to, subject, html }) => {
   try {
     const info = await transporter.sendMail({
-      from: process.env.EMAIL_FROM,
+      from: `RareSync <${process.env.EMAIL_FROM}>`,
       to,
       subject,
       html,
