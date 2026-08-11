@@ -268,11 +268,10 @@ exports.updateEmail = async (req, res) => {
     );
 
     if (!match) {
-      return res.status(400).json({
-        message: 'Password is incorrect.'
-      });
-    }
-
+  return res.status(400).json({
+    message: 'Current password is incorrect.'
+  });
+}
     // ─── Check email in doctors table ────────────────────────
     const [existingDoctors] = await db.execute(
       `SELECT id
