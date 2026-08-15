@@ -5,20 +5,23 @@ const templates = require('../utils/emailTemplates');
 
 // ─── DOCTOR REQUESTS ACCESS ───────────────────────────────────
 exports.requestAccess = async (req, res) => {
-  const { patient_id, reason } = req.body;
+  const { patient_id, reason, purpose, duration_days, requested_info } = req.body;
   const doctor_id = req.user.id;
 
   if (!patient_id) return res.status(400).json({ message: 'Patient ID is required.' });
+  if (!purpose) return res.status(400).json({ message: 'Please select a purpose for access.' });
 
   try {
     const [patient] = await db.execute(
-      'SELECT p.*, h.name AS hospital_name, h.email AS hospital_email FROM patients p JOIN hospitals h ON p.hospital_id = h.id WHERE p.id = ?',
+      `SELECT p.*, h.name AS hospital_name, h.email AS hospital_email 
+       FROM patients p JOIN hospitals h ON p.hospital_id = h.id WHERE p.id = ?`,
       [patient_id]
     );
     if (!patient.length) return res.status(404).json({ message: 'Patient not found.' });
 
     const [existing] = await db.execute(
-      `SELECT id FROM access_requests WHERE doctor_id = ? AND patient_id = ? AND status = 'Pending'`,
+      `SELECT id FROM access_requests 
+       WHERE doctor_id = ? AND patient_id = ? AND status = 'Pending'`,
       [doctor_id, patient_id]
     );
     if (existing.length) {
@@ -26,25 +29,30 @@ exports.requestAccess = async (req, res) => {
     }
 
     await db.execute(
-      'INSERT INTO access_requests (doctor_id, patient_id, hospital_id, reason) VALUES (?,?,?,?)',
-      [doctor_id, patient_id, patient[0].hospital_id, reason || '']
+      `INSERT INTO access_requests 
+       (doctor_id, patient_id, hospital_id, reason, purpose, duration_days, requested_info) 
+       VALUES (?,?,?,?,?,?,?)`,
+      [doctor_id, patient_id, patient[0].hospital_id, reason || '', purpose, duration_days || 30, requested_info || '']
     );
 
-    await logAudit(req.user, 'access_requested', 'patient', patient_id, `Doctor requested access to patient ${patient[0].name}`);
+    await logAudit(req.user, 'access_requested', 'patient', patient_id,
+      `Doctor requested access for: ${purpose}`);
 
-    // Get doctor info
-    const [doctors] = await db.execute('SELECT name, specialization FROM doctors WHERE id = ?', [doctor_id]);
-    const doctor = doctors[0];
+    const [doctors] = await db.execute(
+      'SELECT name, specialization FROM doctors WHERE id = ?', [doctor_id]
+    );
 
-    // Email to hospital
     sendEmail({
       to: patient[0].hospital_email,
-      subject: `New access request from Dr. ${doctor.name}`,
+      subject: `New access request from Dr. ${doctors[0]?.name}`,
       html: templates.newAccessRequest({
         hospitalName: patient[0].hospital_name,
-        doctorName: doctor.name,
-        doctorSpecialization: doctor.specialization,
+        doctorName: doctors[0]?.name,
+        doctorSpecialization: doctors[0]?.specialization,
         patientName: patient[0].name,
+        purpose,
+        duration_days: duration_days || 30,
+        requested_info: requested_info || '',
         reason,
         requestedAt: new Date(),
       }),
@@ -63,7 +71,8 @@ exports.getRequestsForHospital = async (req, res) => {
 
   try {
     let query = `
-      SELECT ar.*, d.name AS doctor_name, d.specialization, d.email AS doctor_email,
+      SELECT ar.*, 
+             d.name AS doctor_name, d.specialization, d.email AS doctor_email,
              p.name AS patient_name
       FROM access_requests ar
       JOIN doctors d ON ar.doctor_id = d.id
@@ -109,7 +118,6 @@ exports.resolveRequest = async (req, res) => {
   }
 
   try {
-    // Get full request info for email
     const [requests] = await db.execute(
       `SELECT ar.*,
               d.name AS doctor_name, d.email AS doctor_email,
@@ -127,15 +135,21 @@ exports.resolveRequest = async (req, res) => {
 
     const request = requests[0];
 
+    // Calculate expiry date based on duration
+    const expires_at = status === 'Approved'
+      ? new Date(Date.now() + (request.duration_days || 30) * 24 * 60 * 60 * 1000)
+      : null;
+
     await db.execute(
-      'UPDATE access_requests SET status = ?, resolved_at = NOW() WHERE id = ? AND hospital_id = ?',
-      [status, req.params.id, hospital_id]
+      `UPDATE access_requests 
+       SET status = ?, resolved_at = NOW(), expires_at = ?
+       WHERE id = ? AND hospital_id = ?`,
+      [status, expires_at, req.params.id, hospital_id]
     );
 
     const action = status === 'Approved' ? 'access_approved' : 'access_rejected';
     await logAudit(req.user, action, 'access_request', req.params.id, `Request ${status}`);
 
-    // Email to doctor
     if (status === 'Approved') {
       sendEmail({
         to: request.doctor_email,
@@ -144,6 +158,9 @@ exports.resolveRequest = async (req, res) => {
           doctorName: request.doctor_name,
           patientName: request.patient_name,
           hospitalName: request.hospital_name,
+          purpose: request.purpose,
+          duration_days: request.duration_days,
+          expires_at,
           approvedAt: new Date(),
         }),
       });
