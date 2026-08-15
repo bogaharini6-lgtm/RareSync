@@ -8,7 +8,7 @@ exports.getProfile = async (req, res) => {
   try {
     if (role === 'doctor') {
       const [rows] = await db.execute(
-        `SELECT 
+        `SELECT
           d.id,
           d.name,
           d.email,
@@ -37,7 +37,7 @@ exports.getProfile = async (req, res) => {
 
     // Hospital profile
     const [rows] = await db.execute(
-      `SELECT 
+      `SELECT
         id,
         name,
         email,
@@ -267,11 +267,21 @@ exports.updateEmail = async (req, res) => {
       rows[0].password
     );
 
+    // Debug information
+    console.log('=== EMAIL CHANGE DEBUG ===');
+    console.log('Role:', role);
+    console.log('ID:', id);
+    console.log('Password entered:', password);
+    console.log('Hash from DB:', rows[0].password);
+    console.log('Match result:', match);
+    console.log('==========================');
+
     if (!match) {
-  return res.status(400).json({
-    message: 'Current password is incorrect.'
-  });
-}
+      return res.status(400).json({
+        message: 'Current password is incorrect.'
+      });
+    }
+
     // ─── Check email in doctors table ────────────────────────
     const [existingDoctors] = await db.execute(
       `SELECT id
