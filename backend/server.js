@@ -20,6 +20,7 @@ app.use('/api/audit', require('./routes/audit'));
 app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/profile', require('./routes/profile'));
 app.use('/api/doctors', require('./routes/doctors'));
+app.use('/api/collaboration', require('./routes/collaboration'));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
