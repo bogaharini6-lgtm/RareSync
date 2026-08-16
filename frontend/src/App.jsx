@@ -1,3 +1,5 @@
+import CollaborationRoom from './pages/CollaborationRoom';
+import SpecialistRequestsPage from './pages/SpecialistRequestsPage';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -12,8 +14,7 @@ import AccessRequestsPage from './pages/AccessRequestsPage';
 import AuditLogsPage from './pages/AuditLogsPage';
 import ProfilePage from './pages/ProfilePage';
 import DoctorsPage from './pages/DoctorsPage';
-import CollaborationRoom from './pages/CollaborationRoom';
-import SpecialistRequestsPage from './pages/SpecialistRequestsPage';
+
 
 const PrivateRoute = ({ children }) => {
   const { user } = useAuth();
