@@ -29,6 +29,7 @@ export default function Navbar() {
           { label: 'Patients', path: '/patients' },
           { label: 'Diseases', path: '/diseases' },
           { label: 'Access Requests', path: '/access-requests' },
+          { label: 'Specialist Requests', path: '/specialist-requests' },
         ];
 
   return (
