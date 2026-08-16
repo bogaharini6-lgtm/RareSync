@@ -20,10 +20,12 @@ export default function PatientDetailPage() {
   const [patientDiseases, setPatientDiseases] = useState([]);
   const [allDiseases, setAllDiseases] = useState([]);
   const [showLinkForm, setShowLinkForm] = useState(false);
+
   const [linkForm, setLinkForm] = useState({
     disease_id: '',
     notes: '',
   });
+
   const [linkError, setLinkError] = useState('');
 
   const [requestReason, setRequestReason] = useState('');
@@ -222,6 +224,13 @@ export default function PatientDetailPage() {
   };
 
   // ─────────────────────────────────────────────
+  // PRINT REPORT
+  // ─────────────────────────────────────────────
+  const handlePrint = () => {
+    window.print();
+  };
+
+  // ─────────────────────────────────────────────
   // ERROR VIEW
   // ─────────────────────────────────────────────
   if (error) {
@@ -302,6 +311,7 @@ export default function PatientDetailPage() {
                   marginTop: 4,
                 }}
               >
+
                 {/* Access Badge */}
                 <span
                   style={{
@@ -372,20 +382,13 @@ export default function PatientDetailPage() {
             }}
           >
 
-            {/* Collaboration Room */}
-            {accessLevel === 'full' &&
-              user?.role === 'doctor' && (
-                <button
-                  onClick={() =>
-                    navigate(
-                      `/collaboration/${id}`
-                    )
-                  }
-                  style={styles.collaborationBtn}
-                >
-                  🏥 Collaboration Room
-                </button>
-              )}
+            {/* Print Report */}
+            <button
+              onClick={handlePrint}
+              style={styles.printBtn}
+            >
+              🖨️ Print Report
+            </button>
 
             {/* Edit Patient */}
             {accessLevel === 'full' && (
@@ -400,6 +403,28 @@ export default function PatientDetailPage() {
                   : 'Edit Patient'}
               </button>
             )}
+
+            {/* Collaboration Room */}
+            {accessLevel === 'full' &&
+              user?.role === 'doctor' && (
+                <button
+                  onClick={() =>
+                    navigate(`/collaboration/${id}`)
+                  }
+                  style={{
+                    padding: '8px 18px',
+                    background: '#7c3aed',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    fontSize: 13,
+                    fontWeight: 700,
+                  }}
+                >
+                  🏥 Collaboration Room
+                </button>
+              )}
           </div>
         </div>
 
@@ -525,9 +550,11 @@ export default function PatientDetailPage() {
         ═══════════════════════════════════════ */}
         {accessLevel === 'full' && (
           <>
+
             {/* Patient Details / Edit Form */}
             {!isEditing ? (
               <div style={styles.card}>
+
                 <DetailRow
                   label="Date of Birth"
                   value={
@@ -875,6 +902,7 @@ export default function PatientDetailPage() {
         ═══════════════════════════════════════ */}
         {accessLevel === 'limited' && (
           <div style={styles.card}>
+
             <DetailRow
               label="Name"
               value={patient.name}
@@ -964,10 +992,21 @@ const styles = {
     fontWeight: 700,
   },
 
-  // NEW: Collaboration Room button
+  printBtn: {
+    padding: '8px 18px',
+    background: 'var(--bg4)',
+    color: 'var(--text)',
+    border: '1px solid var(--border2)',
+    borderRadius: 8,
+    cursor: 'pointer',
+    fontSize: 13,
+    fontWeight: 700,
+    whiteSpace: 'nowrap',
+  },
+
   collaborationBtn: {
     padding: '8px 18px',
-    background: 'var(--purple)',
+    background: '#7c3aed',
     color: '#fff',
     border: 'none',
     borderRadius: 8,
