@@ -642,7 +642,29 @@ const welcomeHospital = ({
     </p>
   `);
 
+// ─── OTP LOGIN EMAIL ──────────────────────────────────────────
+const otpEmail = ({ name, otp, role }) =>
+  base(`
+    <h2>Your RareSync Login OTP</h2>
+    <p>Hello <strong>${name}</strong>,</p>
+    <p>You requested to login to your RareSync ${role === 'doctor' ? 'Doctor' : 'Hospital Admin'} account.</p>
+    <p>Use the following OTP to complete your login:</p>
 
+    <div style="text-align:center;margin:28px 0">
+      <div style="display:inline-block;background:#f0f4ff;border:2px dashed #2563eb;border-radius:12px;padding:20px 40px">
+        <p style="font-size:42px;font-weight:900;color:#2563eb;letter-spacing:12px;margin:0">${otp}</p>
+      </div>
+    </div>
+
+    <p style="text-align:center;color:#94a3b8;font-size:13px">
+      This OTP is valid for <strong>10 minutes</strong> only.
+    </p>
+
+    <hr class="divider"/>
+    <p style="font-size:12px;color:#94a3b8">
+      If you did not request this OTP, please ignore this email. Your account is safe.
+    </p>
+  `);
 // ─── EXPORTS ─────────────────────────────────────────────────
 module.exports = {
   newAccessRequest,
@@ -652,4 +674,5 @@ module.exports = {
   doctorRegistered,
   welcomeDoctor,
   welcomeHospital,
+  otpEmail,
 };
