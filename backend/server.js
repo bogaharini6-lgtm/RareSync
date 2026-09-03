@@ -2,8 +2,44 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
-const app = express();
+const app = express();  
+const rateLimit = require('express-rate-limit');
 
+// General API limit — 200 requests per 15 minutes
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  message: { message: 'Too many requests. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Login limit — 10 attempts per 15 minutes
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { message: 'Too many login attempts. Please try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// OTP limit — 5 attempts per 15 minutes
+const otpLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { message: 'Too many OTP attempts. Please try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+// Specific limiters MUST come before general limiter
+app.use('/api/auth/doctor/login', loginLimiter);
+app.use('/api/auth/hospital/login', loginLimiter);
+app.use('/api/auth/doctor/verify-otp', otpLimiter);
+app.use('/api/auth/hospital/verify-otp', otpLimiter);
+app.use('/api/auth/resend-otp', otpLimiter);
+
+// General limiter applies to everything else
+app.use('/api/', apiLimiter);
 app.use(cors());
 app.use(express.json());
 
