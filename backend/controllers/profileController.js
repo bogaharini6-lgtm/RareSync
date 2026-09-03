@@ -267,15 +267,6 @@ exports.updateEmail = async (req, res) => {
       rows[0].password
     );
 
-    // Debug information
-    console.log('=== EMAIL CHANGE DEBUG ===');
-    console.log('Role:', role);
-    console.log('ID:', id);
-    console.log('Password entered:', password);
-    console.log('Hash from DB:', rows[0].password);
-    console.log('Match result:', match);
-    console.log('==========================');
-
     if (!match) {
       return res.status(400).json({
         message: 'Current password is incorrect.'

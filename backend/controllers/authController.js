@@ -94,8 +94,23 @@ exports.hospitalVerifyOTP = async (req, res) => {
     }
 
     if (otpRows[0].otp !== otp.trim()) {
-      return res.status(400).json({ message: 'Incorrect OTP. Please try again.' });
-    }
+  const currentAttempts = otpRows[0].attempts || 0;
+
+  if (currentAttempts >= 4) {
+    await db.execute('UPDATE otp_codes SET used = TRUE WHERE id = ?', [otpRows[0].id]);
+    return res.status(400).json({ message: 'Too many incorrect attempts. Please login again to get a new OTP.' });
+  }
+
+  await db.execute(
+    'UPDATE otp_codes SET attempts = attempts + 1 WHERE id = ?',
+    [otpRows[0].id]
+  );
+
+  const attemptsLeft = 4 - currentAttempts;
+  return res.status(400).json({
+    message: `Incorrect OTP. ${attemptsLeft} attempt${attemptsLeft !== 1 ? 's' : ''} remaining.`
+  });
+}
 
     // Mark OTP as used
     await db.execute('UPDATE otp_codes SET used = TRUE WHERE id = ?', [otpRows[0].id]);
@@ -224,8 +239,23 @@ exports.doctorVerifyOTP = async (req, res) => {
     }
 
     if (otpRows[0].otp !== otp.trim()) {
-      return res.status(400).json({ message: 'Incorrect OTP. Please try again.' });
-    }
+  const currentAttempts = otpRows[0].attempts || 0;
+
+  if (currentAttempts >= 4) {
+    await db.execute('UPDATE otp_codes SET used = TRUE WHERE id = ?', [otpRows[0].id]);
+    return res.status(400).json({ message: 'Too many incorrect attempts. Please login again to get a new OTP.' });
+  }
+
+  await db.execute(
+    'UPDATE otp_codes SET attempts = attempts + 1 WHERE id = ?',
+    [otpRows[0].id]
+  );
+
+  const attemptsLeft = 4 - currentAttempts;
+  return res.status(400).json({
+    message: `Incorrect OTP. ${attemptsLeft} attempt${attemptsLeft !== 1 ? 's' : ''} remaining.`
+  });
+}
 
     // Mark OTP used
     await db.execute('UPDATE otp_codes SET used = TRUE WHERE id = ?', [otpRows[0].id]);
