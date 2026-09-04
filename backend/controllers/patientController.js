@@ -1,4 +1,4 @@
-const db = require('../config/db');
+﻿const db = require('../config/db');
 const { logAudit } = require('./auditController');
 const sendEmail = require('../utils/sendEmail');
 const templates = require('../utils/emailTemplates');
@@ -22,44 +22,36 @@ exports.addPatient = async (req, res) => {
       }
     }
     res.status(201).json({ message: 'Patient added successfully.', id: result.insertId });
-  } catch (err) { res.status(500).json({ message: "An internal server error occurred." }); }
+  } catch (err) {
+    console.error('addPatient error:', err);
+    res.status(500).json({ message: 'An internal server error occurred.' });
+  }
 };
 
 exports.getPatients = async (req, res) => {
   const search = req.query.search || '';
+  const page = parseInt(req.query.page) || 1;
+  const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+  const offset = (page - 1) * limit;
   try {
     if (req.user.role === 'hospital') {
       const [rows] = await db.execute(
-        'SELECT p.*, h.name AS hospital_name, GROUP_CONCAT(DISTINCT rd.name SEPARATOR ", ") AS disease_names FROM patients p JOIN hospitals h ON p.hospital_id = h.id LEFT JOIN patient_diseases pd ON pd.patient_id = p.id LEFT JOIN rare_diseases rd ON rd.id = pd.disease_id WHERE p.hospital_id = ? AND (p.name LIKE ? OR p.contact LIKE ?) GROUP BY p.id ORDER BY p.created_at DESC',
-        [req.user.id, '%' + search + '%', '%' + search + '%']
+        'SELECT p.*, h.name AS hospital_name, GROUP_CONCAT(DISTINCT rd.name SEPARATOR ", ") AS disease_names FROM patients p JOIN hospitals h ON p.hospital_id = h.id LEFT JOIN patient_diseases pd ON pd.patient_id = p.id LEFT JOIN rare_diseases rd ON rd.id = pd.disease_id WHERE p.hospital_id = ? AND (p.name LIKE ? OR p.contact LIKE ?) GROUP BY p.id ORDER BY p.created_at DESC LIMIT ? OFFSET ?',
+        [req.user.id, '%' + search + '%', '%' + search + '%', limit, offset]
       );
-      return res.json(rows.map((p) => ({ ...p, access_level: 'full', access_status: 'approved' })));
+      return res.json({ patients: rows.map((p) => ({ ...p, access_level: 'full', access_status: 'approved' })), page, limit, hasMore: rows.length === limit });
     }
-
     const doctor_id = Number(req.user.id);
-
-    const [approvedRows] = await db.execute(
-      "SELECT patient_id FROM access_requests WHERE doctor_id = ? AND status = 'Approved'",
-      [doctor_id]
-    );
-    const [pendingRows] = await db.execute(
-      "SELECT patient_id FROM access_requests WHERE doctor_id = ? AND status = 'Pending'",
-      [doctor_id]
-    );
-    const [recordRows] = await db.execute(
-      'SELECT DISTINCT patient_id FROM medical_records WHERE doctor_id = ?',
-      [doctor_id]
-    );
-
-    const approvedIds = new Set(approvedRows.map((r) => Number(r.patient_id)));
-    const pendingIds = new Set(pendingRows.map((r) => Number(r.patient_id)));
-    const ownRecordIds = new Set(recordRows.map((r) => Number(r.patient_id)));
-
+    const [approvedRequests] = await db.execute("SELECT patient_id FROM access_requests WHERE doctor_id = ? AND status = 'Approved'", [doctor_id]);
+    const [pendingRequests] = await db.execute("SELECT patient_id FROM access_requests WHERE doctor_id = ? AND status = 'Pending'", [doctor_id]);
+    const [ownRecords] = await db.execute('SELECT DISTINCT patient_id FROM medical_records WHERE doctor_id = ?', [doctor_id]);
+    const approvedIds = new Set(approvedRequests.map((r) => Number(r.patient_id)));
+    const pendingIds = new Set(pendingRequests.map((r) => Number(r.patient_id)));
+    const ownRecordIds = new Set(ownRecords.map((r) => Number(r.patient_id)));
     const [rows] = await db.execute(
-      'SELECT p.id, p.name, p.dob, p.gender, p.hospital_id, p.created_at, p.created_by_doctor, h.name AS hospital_name, GROUP_CONCAT(DISTINCT rd.name SEPARATOR ", ") AS disease_names FROM patients p JOIN hospitals h ON p.hospital_id = h.id LEFT JOIN patient_diseases pd ON pd.patient_id = p.id LEFT JOIN rare_diseases rd ON rd.id = pd.disease_id WHERE (p.name LIKE ? OR h.name LIKE ?) GROUP BY p.id ORDER BY p.created_at DESC',
-      ['%' + search + '%', '%' + search + '%']
+      'SELECT p.id, p.name, p.dob, p.gender, p.hospital_id, p.created_at, p.created_by_doctor, h.name AS hospital_name, GROUP_CONCAT(DISTINCT rd.name SEPARATOR ", ") AS disease_names FROM patients p JOIN hospitals h ON p.hospital_id = h.id LEFT JOIN patient_diseases pd ON pd.patient_id = p.id LEFT JOIN rare_diseases rd ON rd.id = pd.disease_id WHERE (p.name LIKE ? OR h.name LIKE ?) GROUP BY p.id ORDER BY p.created_at DESC LIMIT ? OFFSET ?',
+      ['%' + search + '%', '%' + search + '%', limit, offset]
     );
-
     const result = rows.map((p) => {
       let age = null;
       if (p.dob) {
@@ -69,44 +61,23 @@ exports.getPatients = async (req, res) => {
         const m = today.getMonth() - dob.getMonth();
         if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
       }
-
       const pid = Number(p.id);
-      const isPrimary = Number(p.created_by_doctor) === doctor_id;
-      const hasOwnRec = ownRecordIds.has(pid);
+      const isAssignedDoctor = Number(p.created_by_doctor) === doctor_id;
+      const hasOwnRecords = ownRecordIds.has(pid);
       const isApproved = approvedIds.has(pid);
       const isPending = pendingIds.has(pid);
-
       let access_level = 'limited';
       let access_status = 'none';
-
-      if (isPrimary || hasOwnRec) {
-        access_level = 'full';
-        access_status = 'assigned';
-      } else if (isApproved) {
-        access_level = 'full';
-        access_status = 'approved';
-      } else if (isPending) {
-        access_level = 'limited';
-        access_status = 'pending';
-      }
-
-      return {
-        id: pid,
-        name: p.name,
-        age,
-        gender: p.gender,
-        hospital_name: p.hospital_name,
-        hospital_id: Number(p.hospital_id),
-        disease_names: p.disease_names || null,
-        created_at: p.created_at,
-        created_by_doctor: p.created_by_doctor ? Number(p.created_by_doctor) : null,
-        access_level,
-        access_status,
-      };
+      if (isAssignedDoctor || hasOwnRecords) { access_level = 'full'; access_status = 'assigned'; }
+      else if (isApproved) { access_level = 'full'; access_status = 'approved'; }
+      else if (isPending) { access_level = 'limited'; access_status = 'pending'; }
+      return { id: pid, name: p.name, age, gender: p.gender, hospital_name: p.hospital_name, hospital_id: Number(p.hospital_id), disease_names: p.disease_names || null, created_at: p.created_at, created_by_doctor: p.created_by_doctor ? Number(p.created_by_doctor) : null, access_level, access_status };
     });
-
-    res.json(result);
-  } catch (err) { res.status(500).json({ message: "An internal server error occurred." }); }
+    res.json({ patients: result, page, limit, hasMore: result.length === limit });
+  } catch (err) {
+    console.error('getPatients error:', err);
+    res.status(500).json({ message: 'An internal server error occurred.' });
+  }
 };
 
 exports.getPatientById = async (req, res) => {
@@ -138,15 +109,28 @@ exports.updatePatient = async (req, res) => {
     await db.execute('UPDATE patients SET name=?, dob=?, gender=?, contact=?, address=?, blood_group=?, emergency_contact=? WHERE id=?', [name, dob || null, gender || null, contact, address, blood_group, emergency_contact, req.params.id]);
     await logAudit(req.user, 'patient_updated', 'patient', req.params.id, 'Patient ' + name + ' updated');
     res.json({ message: 'Patient updated successfully.' });
-  } catch (err) { res.status(500).json({ message: "An internal server error occurred." }); }
+  } catch (err) {
+    console.error('updatePatient error:', err);
+    res.status(500).json({ message: 'An internal server error occurred.' });
+  }
 };
 
 exports.deletePatient = async (req, res) => {
   try {
-    const [rows] = await db.execute('SELECT name FROM patients WHERE id = ?', [req.params.id]);
+    const [rows] = await db.execute('SELECT name, created_by_doctor, hospital_id FROM patients WHERE id = ?', [req.params.id]);
     if (!rows.length) return res.status(404).json({ message: 'Patient not found.' });
+    const patient = rows[0];
+    if (req.user.role === 'hospital' && Number(patient.hospital_id) !== Number(req.user.id)) {
+      return res.status(403).json({ message: 'This patient does not belong to your hospital.' });
+    }
+    if (req.user.role === 'doctor' && Number(patient.created_by_doctor) !== Number(req.user.id)) {
+      return res.status(403).json({ message: 'Only the primary doctor can delete this patient.' });
+    }
     await db.execute('DELETE FROM patients WHERE id = ?', [req.params.id]);
-    await logAudit(req.user, 'patient_deleted', 'patient', req.params.id, 'Patient ' + rows[0].name + ' deleted');
+    await logAudit(req.user, 'patient_deleted', 'patient', req.params.id, 'Patient ' + patient.name + ' deleted');
     res.json({ message: 'Patient deleted successfully.' });
-  } catch (err) { res.status(500).json({ message: "An internal server error occurred." }); }
+  } catch (err) {
+    console.error('deletePatient error:', err);
+    res.status(500).json({ message: 'An internal server error occurred.' });
+  }
 };
