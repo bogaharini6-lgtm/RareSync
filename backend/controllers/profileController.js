@@ -66,7 +66,7 @@ exports.getProfile = async (req, res) => {
     console.error('Get Profile Error:', err);
 
     return res.status(500).json({
-      message: err.message
+      message: "An internal server error occurred."
     });
   }
 };
@@ -157,7 +157,7 @@ exports.updateProfile = async (req, res) => {
     console.error('Update Profile Error:', err);
 
     return res.status(500).json({
-      message: err.message
+      message: "An internal server error occurred."
     });
   }
 };
@@ -220,7 +220,7 @@ exports.changePassword = async (req, res) => {
     console.error('Change Password Error:', err);
 
     return res.status(500).json({
-      message: err.message
+      message: "An internal server error occurred."
     });
   }
 };
@@ -324,7 +324,7 @@ exports.updateEmail = async (req, res) => {
     console.error('Update Email Error:', err);
 
     return res.status(500).json({
-      message: err.message
+      message: "An internal server error occurred."
     });
   }
 };

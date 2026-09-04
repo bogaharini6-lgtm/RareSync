@@ -65,7 +65,7 @@ exports.addRecord = async (req, res) => {
     await logAudit(req.user, 'record_created', 'medical_record', result.insertId, `${record_type} added for patient ${patient_id}`);
     res.status(201).json({ message: 'Record added successfully.', id: result.insertId });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "An internal server error occurred." });
   }
 };
 
@@ -104,7 +104,7 @@ exports.getRecordsByPatient = async (req, res) => {
     const [rows] = await db.execute(query, params);
     res.json(rows);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "An internal server error occurred." });
   }
 };
 
@@ -121,7 +121,7 @@ exports.getRecordById = async (req, res) => {
     if (!rows.length) return res.status(404).json({ message: 'Record not found.' });
     res.json(rows[0]);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "An internal server error occurred." });
   }
 };
 
@@ -138,7 +138,7 @@ exports.updateRecord = async (req, res) => {
     await logAudit(req.user, 'record_updated', 'medical_record', req.params.id, 'Record updated');
     res.json({ message: 'Record updated successfully.' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "An internal server error occurred." });
   }
 };
 
@@ -151,6 +151,6 @@ exports.deleteRecord = async (req, res) => {
     );
     res.json({ message: 'Record deleted successfully.' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "An internal server error occurred." });
   }
 };

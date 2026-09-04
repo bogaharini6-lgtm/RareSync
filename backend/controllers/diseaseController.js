@@ -16,7 +16,7 @@ exports.addDisease = async (req, res) => {
     );
     res.status(201).json({ message: 'Disease added successfully.', id: result.insertId });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "An internal server error occurred." });
   }
 };
 
@@ -32,7 +32,7 @@ exports.getDiseases = async (req, res) => {
     );
     res.json(rows);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "An internal server error occurred." });
   }
 };
 
@@ -48,7 +48,7 @@ exports.getDiseaseById = async (req, res) => {
     }
     res.json(rows[0]);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "An internal server error occurred." });
   }
 };
 
@@ -69,7 +69,7 @@ exports.updateDisease = async (req, res) => {
     );
     res.json({ message: 'Disease updated successfully.' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "An internal server error occurred." });
   }
 };
 
@@ -99,7 +99,7 @@ exports.linkPatientToDisease = async (req, res) => {
     );
     res.status(201).json({ message: 'Patient linked to disease successfully.' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "An internal server error occurred." });
   }
 };
 
@@ -146,7 +146,7 @@ exports.getPatientDiseases = async (req, res) => {
     );
     res.json(rows);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "An internal server error occurred." });
   }
 };
 
@@ -156,6 +156,6 @@ exports.unlinkPatientDisease = async (req, res) => {
     await db.execute('DELETE FROM patient_diseases WHERE id = ?', [req.params.id]);
     res.json({ message: 'Disease unlinked from patient.' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "An internal server error occurred." });
   }
 };

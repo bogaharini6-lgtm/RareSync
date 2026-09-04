@@ -109,7 +109,7 @@ exports.getOrCreateRoom = async (req, res) => {
       specialist_requests: specialistReqs,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "An internal server error occurred." });
   }
 };
 
@@ -145,7 +145,7 @@ exports.sendMessage = async (req, res) => {
 
     res.json({ message: 'Message sent.', messages });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "An internal server error occurred." });
   }
 };
 
@@ -197,7 +197,7 @@ exports.findSpecialists = async (req, res) => {
       diseases: diseases.map(d => d.name),
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "An internal server error occurred." });
   }
 };
 
@@ -291,7 +291,7 @@ exports.requestSpecialistOpinion = async (req, res) => {
 
     res.status(201).json({ message: 'Specialist opinion requested successfully.' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "An internal server error occurred." });
   }
 };
 
@@ -363,7 +363,7 @@ exports.respondToSpecialistRequest = async (req, res) => {
 
     res.json({ message: `Request ${status}.` });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "An internal server error occurred." });
   }
 };
 
@@ -386,7 +386,7 @@ exports.getMySpecialistRequests = async (req, res) => {
     );
     res.json(rows);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "An internal server error occurred." });
   }
 };
 
@@ -409,6 +409,6 @@ exports.getMyRooms = async (req, res) => {
     );
     res.json(rows);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "An internal server error occurred." });
   }
 };

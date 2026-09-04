@@ -145,6 +145,6 @@ exports.getDashboardStats = async (req, res) => {
       recent_patients,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "An internal server error occurred." });
   }
 };

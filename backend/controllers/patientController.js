@@ -1,4 +1,4 @@
-﻿const db = require('../config/db');
+const db = require('../config/db');
 const { logAudit } = require('./auditController');
 const sendEmail = require('../utils/sendEmail');
 const templates = require('../utils/emailTemplates');
@@ -22,7 +22,7 @@ exports.addPatient = async (req, res) => {
       }
     }
     res.status(201).json({ message: 'Patient added successfully.', id: result.insertId });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { res.status(500).json({ message: "An internal server error occurred." }); }
 };
 
 exports.getPatients = async (req, res) => {
@@ -106,7 +106,7 @@ exports.getPatients = async (req, res) => {
     });
 
     res.json(result);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { res.status(500).json({ message: "An internal server error occurred." }); }
 };
 
 exports.getPatientById = async (req, res) => {
@@ -138,7 +138,7 @@ exports.updatePatient = async (req, res) => {
     await db.execute('UPDATE patients SET name=?, dob=?, gender=?, contact=?, address=?, blood_group=?, emergency_contact=? WHERE id=?', [name, dob || null, gender || null, contact, address, blood_group, emergency_contact, req.params.id]);
     await logAudit(req.user, 'patient_updated', 'patient', req.params.id, 'Patient ' + name + ' updated');
     res.json({ message: 'Patient updated successfully.' });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { res.status(500).json({ message: "An internal server error occurred." }); }
 };
 
 exports.deletePatient = async (req, res) => {
@@ -148,5 +148,5 @@ exports.deletePatient = async (req, res) => {
     await db.execute('DELETE FROM patients WHERE id = ?', [req.params.id]);
     await logAudit(req.user, 'patient_deleted', 'patient', req.params.id, 'Patient ' + rows[0].name + ' deleted');
     res.json({ message: 'Patient deleted successfully.' });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { res.status(500).json({ message: "An internal server error occurred." }); }
 };
