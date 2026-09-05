@@ -20,7 +20,7 @@ export default function PatientsPage() {
     setLoading(true);
     try {
       const { data } = await API.get(`/patients?search=${search}&page=1&limit=50`);
-setPatients(data.patients || data);
+    setPatients(Array.isArray(data) ? data : (data.patients || []));
     } catch (err) { setError('Failed to load patients.'); }
     finally { setLoading(false); }
   };

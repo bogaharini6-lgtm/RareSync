@@ -5,7 +5,7 @@ const checkPatientAccess = async (req, res, next) => {
   const patient_id = req.params.id || req.params.patient_id || req.body.patient_id;
 
   try {
-    const [patients] = await db.execute('SELECT * FROM patients WHERE id = ?', [patient_id]);
+    const [patients] = await db.execute('SELECT * FROM patients WHERE id = ? AND deleted_at IS NULL', [patient_id]);
     if (!patients.length) return res.status(404).json({ message: 'Patient not found.' });
 
     const patient = patients[0];
