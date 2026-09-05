@@ -1,3 +1,5 @@
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 import CollaborationRoom from './pages/CollaborationRoom';
 import SpecialistRequestsPage from './pages/SpecialistRequestsPage';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
@@ -39,6 +41,8 @@ function AppRoutes() {
       <Route path="/doctors" element={<PrivateRoute><DoctorsPage /></PrivateRoute>} />
       <Route path="/collaboration/:patient_id" element={<PrivateRoute><CollaborationRoom /></PrivateRoute>} />
 <Route path="/specialist-requests" element={<PrivateRoute><SpecialistRequestsPage /></PrivateRoute>} />
+<Route path="/privacy" element={<PrivacyPolicy />} />
+<Route path="/terms" element={<TermsOfService />} />
     </Routes>
   );
 }

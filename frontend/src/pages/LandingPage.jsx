@@ -171,6 +171,33 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
+      {/* SECURITY SECTION */}
+<section id="security" style={{ padding: '80px 32px', background: 'var(--bg2)' }}>
+  <div style={{ maxWidth: 1000, margin: '0 auto', textAlign: 'center' }}>
+    <h2 style={{ fontSize: 32, fontWeight: 800, color: 'var(--text)', marginBottom: 12 }}>
+      Built for Security
+    </h2>
+    <p style={{ color: 'var(--text2)', fontSize: 16, marginBottom: 48, maxWidth: 600, margin: '0 auto 48px auto' }}>
+      RareSync is built with healthcare-grade security to protect sensitive patient data.
+    </p>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+      {[
+        { icon: '🔐', title: 'OTP Authentication', desc: 'Every login requires a one-time password sent to your registered email. No SMS, no third-party apps.' },
+        { icon: '🛡️', title: 'Role-Based Access', desc: 'Doctors see only limited patient info by default. Full access requires explicit hospital approval.' },
+        { icon: '⏱️', title: 'Time-Limited Access', desc: 'Approved access automatically expires. Purpose and duration must be specified for every request.' },
+        { icon: '📋', title: 'Full Audit Trail', desc: 'Every action on the platform is logged — who accessed what, when and why.' },
+        { icon: '🔒', title: 'Data Protection', desc: 'Passwords hashed with bcrypt. JWT authentication. Rate limiting on all sensitive endpoints.' },
+        { icon: '🏥', title: 'Hospital Control', desc: 'Hospital administrators control all access approvals and can review complete access history.' },
+      ].map((item) => (
+        <div key={item.title} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 24, textAlign: 'left' }}>
+          <div style={{ fontSize: 32, marginBottom: 12 }}>{item.icon}</div>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>{item.title}</h3>
+          <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.7, margin: 0 }}>{item.desc}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
 
       {/* CTA */}
       <section style={styles.ctaSection}>
@@ -199,6 +226,20 @@ export default function LandingPage() {
     </div>
   );
 }
+<div style={{ display: 'flex', gap: 20, justifyContent: 'center', marginTop: 16 }}>
+  <span
+    onClick={() => navigate('/privacy')}
+    style={{ color: 'var(--text3)', fontSize: 12, cursor: 'pointer', textDecoration: 'underline' }}
+  >
+    Privacy Policy
+  </span>
+  <span
+    onClick={() => navigate('/terms')}
+    style={{ color: 'var(--text3)', fontSize: 12, cursor: 'pointer', textDecoration: 'underline' }}
+  >
+    Terms of Service
+  </span>
+</div>
 
 const styles = {
   page: { background: 'var(--bg)', color: 'var(--text)', minHeight: '100vh', fontFamily: 'Arial, sans-serif' },
