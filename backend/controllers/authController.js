@@ -14,6 +14,12 @@ exports.hospitalRegister = async (req, res) => {
   if (!name || !email || !password) {
     return res.status(400).json({ message: 'Name, email and password are required.' });
   }
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+if (!passwordRegex.test(password)) {
+  return res.status(400).json({
+    message: 'Password must be at least 8 characters with uppercase, lowercase, number and special character (@$!%*?&).'
+  });
+}
   try {
     const hashed = await bcrypt.hash(password, 10);
     await db.execute(
@@ -28,7 +34,7 @@ exports.hospitalRegister = async (req, res) => {
     res.status(201).json({ message: 'Hospital registered successfully.' });
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY') return res.status(400).json({ message: 'Email already registered.' });
-    res.status(500).json({ message: "An internal server error occurred." });
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -36,7 +42,12 @@ exports.hospitalRegister = async (req, res) => {
 exports.hospitalLogin = async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ message: 'Email and password are required.' });
-
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+if (!passwordRegex.test(password)) {
+  return res.status(400).json({
+    message: 'Password must be at least 8 characters with uppercase, lowercase, number and special character (@$!%*?&).'
+  });
+}
   try {
     const [rows] = await db.execute('SELECT * FROM hospitals WHERE email = ?', [email]);
     if (!rows.length) return res.status(400).json({ message: 'Invalid email or password.' });
@@ -71,7 +82,7 @@ exports.hospitalLogin = async (req, res) => {
       email,
     });
   } catch (err) {
-    res.status(500).json({ message: "An internal server error occurred." });
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -130,7 +141,7 @@ exports.hospitalVerifyOTP = async (req, res) => {
       email: hospital.email,
     });
   } catch (err) {
-    res.status(500).json({ message: "An internal server error occurred." });
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -173,7 +184,7 @@ exports.doctorRegister = async (req, res) => {
     res.status(201).json({ message: 'Doctor registered successfully.' });
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY') return res.status(400).json({ message: 'Email already registered.' });
-    res.status(500).json({ message: "An internal server error occurred." });
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -216,7 +227,7 @@ exports.doctorLogin = async (req, res) => {
       email,
     });
   } catch (err) {
-    res.status(500).json({ message: "An internal server error occurred." });
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -281,7 +292,7 @@ exports.doctorVerifyOTP = async (req, res) => {
       specialization: doctor.specialization,
     });
   } catch (err) {
-    res.status(500).json({ message: "An internal server error occurred." });
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -313,7 +324,7 @@ exports.resendOTP = async (req, res) => {
 
     res.json({ message: 'New OTP sent to your email.' });
   } catch (err) {
-    res.status(500).json({ message: "An internal server error occurred." });
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -323,6 +334,6 @@ exports.getHospitals = async (req, res) => {
     const [rows] = await db.execute('SELECT id, name FROM hospitals ORDER BY name');
     res.json(rows);
   } catch (err) {
-    res.status(500).json({ message: "An internal server error occurred." });
+    res.status(500).json({ message: err.message });
   }
 };
