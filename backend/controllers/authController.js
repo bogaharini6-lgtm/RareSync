@@ -133,13 +133,19 @@ exports.hospitalVerifyOTP = async (req, res) => {
     const hospital = rows[0];
     const token = generateToken({ id: hospital.id, role: 'hospital' });
 
-    res.json({
-      token,
-      role: 'hospital',
-      id: hospital.id,
-      name: hospital.name,
-      email: hospital.email,
-    });
+    res.cookie('token', token, {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict',
+  maxAge: 8 * 60 * 60 * 1000,
+});
+
+res.json({
+  role: 'hospital',
+  id: hospital.id,
+  name: hospital.name,
+  email: hospital.email,
+});
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -282,15 +288,21 @@ exports.doctorVerifyOTP = async (req, res) => {
       hospital_id: doctor.hospital_id,
     });
 
-    res.json({
-      token,
-      role: 'doctor',
-      id: doctor.id,
-      name: doctor.name,
-      email: doctor.email,
-      hospital_id: doctor.hospital_id,
-      specialization: doctor.specialization,
-    });
+    res.cookie('token', token, {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict',
+  maxAge: 8 * 60 * 60 * 1000, // 8 hours
+});
+
+res.json({
+  role: 'doctor',
+  id: doctor.id,
+  name: doctor.name,
+  email: doctor.email,
+  hospital_id: doctor.hospital_id,
+  specialization: doctor.specialization,
+});
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

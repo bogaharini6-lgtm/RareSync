@@ -41,8 +41,10 @@ app.use('/api/auth/resend-otp', otpLimiter);
 // General limiter applies to everything else
 app.use('/api/', apiLimiter);
 const helmet = require('helmet');
+const cookieParser = require('cookie-parser');
 
 app.use(helmet());
+app.use(cookieParser());
 
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',
