@@ -212,6 +212,33 @@ export default function LoginPage() {
 
                 {error && <p style={styles.error}>{error}</p>}
 
+                {isRegister && (
+  <div style={{ marginBottom: 14, display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+    <input
+      type="checkbox"
+      id="consent"
+      required
+      style={{ marginTop: 3, flexShrink: 0, width: 16, height: 16, cursor: 'pointer' }}
+    />
+    <label htmlFor="consent" style={{ fontSize: 12, color: 'var(--text2)', lineHeight: 1.6, cursor: 'pointer' }}>
+      I agree to the{' '}
+      <span
+        onClick={() => window.open('/terms', '_blank')}
+        style={{ color: 'var(--accent)', textDecoration: 'underline', cursor: 'pointer' }}
+      >
+        Terms of Service
+      </span>
+      {' '}and{' '}
+      <span
+        onClick={() => window.open('/privacy', '_blank')}
+        style={{ color: 'var(--accent)', textDecoration: 'underline', cursor: 'pointer' }}
+      >
+        Privacy Policy
+      </span>
+      . I confirm I am a licensed healthcare professional.
+    </label>
+  </div>
+)}
                 <button style={styles.submitBtn} type="submit" disabled={loading}>
                   {loading ? 'Please wait...' : isRegister ? 'Register' : 'Send OTP →'}
                 </button>
