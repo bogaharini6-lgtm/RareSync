@@ -10,7 +10,7 @@ exports.addPatient = async (req, res) => {
   const created_by_doctor = req.user.role === 'doctor' ? req.user.id : null;
   try {
     const [result] = await db.execute(
-      'INSERT INTO patients (hospital_id, name, dob, gender, contact, address, blood_group, emergency_contact, created_by_doctor) VALUES (?,?,?,?,?,?,?,?,?)',
+      'INSERT INTO patients (hospital_id, name, dob, gender, contact, address, blood_group, emergency_contact, created_by_doctor) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [hospital_id, name, dob || null, gender || null, contact, address, blood_group, emergency_contact, created_by_doctor]
     );
     await logAudit(req.user, 'patient_created', 'patient', result.insertId, 'Patient ' + name + ' added');
@@ -30,14 +30,14 @@ exports.addPatient = async (req, res) => {
 
 exports.getPatients = async (req, res) => {
   const search = req.query.search || '';
-  const page = parseInt(req.query.page) || 1;
-  const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+  const page = Math.max(parseInt(req.query.page) || 1, 1);
+  const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 100);
   const offset = (page - 1) * limit;
   try {
     if (req.user.role === 'hospital') {
       const [rows] = await db.execute(
-        'SELECT p.*, h.name AS hospital_name, GROUP_CONCAT(DISTINCT rd.name SEPARATOR ", ") AS disease_names FROM patients p JOIN hospitals h ON p.hospital_id = h.id LEFT JOIN patient_diseases pd ON pd.patient_id = p.id LEFT JOIN rare_diseases rd ON rd.id = pd.disease_id WHERE p.hospital_id = ? AND (p.name LIKE ? OR p.contact LIKE ?) GROUP BY p.id ORDER BY p.created_at DESC LIMIT ? OFFSET ?',
-        [req.user.id, '%' + search + '%', '%' + search + '%', limit, offset]
+        'SELECT p.*, h.name AS hospital_name, GROUP_CONCAT(DISTINCT rd.name SEPARATOR ", ") AS disease_names FROM patients p JOIN hospitals h ON p.hospital_id = h.id LEFT JOIN patient_diseases pd ON pd.patient_id = p.id LEFT JOIN rare_diseases rd ON rd.id = pd.disease_id WHERE p.hospital_id = ? AND (p.name LIKE ? OR p.contact LIKE ?) GROUP BY p.id ORDER BY p.created_at DESC LIMIT ' + limit + ' OFFSET ' + offset,
+        [req.user.id, '%' + search + '%', '%' + search + '%']
       );
       return res.json({ patients: rows.map((p) => ({ ...p, access_level: 'full', access_status: 'approved' })), page, limit, hasMore: rows.length === limit });
     }
@@ -49,8 +49,8 @@ exports.getPatients = async (req, res) => {
     const pendingIds = new Set(pendingRequests.map((r) => Number(r.patient_id)));
     const ownRecordIds = new Set(ownRecords.map((r) => Number(r.patient_id)));
     const [rows] = await db.execute(
-      'SELECT p.id, p.name, p.dob, p.gender, p.hospital_id, p.created_at, p.created_by_doctor, h.name AS hospital_name, GROUP_CONCAT(DISTINCT rd.name SEPARATOR ", ") AS disease_names FROM patients p JOIN hospitals h ON p.hospital_id = h.id LEFT JOIN patient_diseases pd ON pd.patient_id = p.id LEFT JOIN rare_diseases rd ON rd.id = pd.disease_id WHERE (p.name LIKE ? OR h.name LIKE ?) GROUP BY p.id ORDER BY p.created_at DESC LIMIT ? OFFSET ?',
-      ['%' + search + '%', '%' + search + '%', limit, offset]
+      'SELECT p.id, p.name, p.dob, p.gender, p.hospital_id, p.created_at, p.created_by_doctor, h.name AS hospital_name, GROUP_CONCAT(DISTINCT rd.name SEPARATOR ", ") AS disease_names FROM patients p JOIN hospitals h ON p.hospital_id = h.id LEFT JOIN patient_diseases pd ON pd.patient_id = p.id LEFT JOIN rare_diseases rd ON rd.id = pd.disease_id WHERE (p.name LIKE ? OR h.name LIKE ?) GROUP BY p.id ORDER BY p.created_at DESC LIMIT ' + limit + ' OFFSET ' + offset,
+      ['%' + search + '%', '%' + search + '%']
     );
     const result = rows.map((p) => {
       let age = null;
@@ -73,7 +73,7 @@ exports.getPatients = async (req, res) => {
       else if (isPending) { access_level = 'limited'; access_status = 'pending'; }
       return { id: pid, name: p.name, age, gender: p.gender, hospital_name: p.hospital_name, hospital_id: Number(p.hospital_id), disease_names: p.disease_names || null, created_at: p.created_at, created_by_doctor: p.created_by_doctor ? Number(p.created_by_doctor) : null, access_level, access_status };
     });
-    res.json({ patients: result, page, limit, hasMore: result.length === limit });
+    return res.json({ patients: result, page, limit, hasMore: result.length === limit });
   } catch (err) {
     console.error('getPatients error:', err);
     res.status(500).json({ message: 'An internal server error occurred.' });
@@ -120,12 +120,8 @@ exports.deletePatient = async (req, res) => {
     const [rows] = await db.execute('SELECT name, created_by_doctor, hospital_id FROM patients WHERE id = ?', [req.params.id]);
     if (!rows.length) return res.status(404).json({ message: 'Patient not found.' });
     const patient = rows[0];
-    if (req.user.role === 'hospital' && Number(patient.hospital_id) !== Number(req.user.id)) {
-      return res.status(403).json({ message: 'This patient does not belong to your hospital.' });
-    }
-    if (req.user.role === 'doctor' && Number(patient.created_by_doctor) !== Number(req.user.id)) {
-      return res.status(403).json({ message: 'Only the primary doctor can delete this patient.' });
-    }
+    if (req.user.role === 'hospital' && Number(patient.hospital_id) !== Number(req.user.id)) return res.status(403).json({ message: 'This patient does not belong to your hospital.' });
+    if (req.user.role === 'doctor' && Number(patient.created_by_doctor) !== Number(req.user.id)) return res.status(403).json({ message: 'Only the primary doctor can delete this patient.' });
     await db.execute('DELETE FROM patients WHERE id = ?', [req.params.id]);
     await logAudit(req.user, 'patient_deleted', 'patient', req.params.id, 'Patient ' + patient.name + ' deleted');
     res.json({ message: 'Patient deleted successfully.' });

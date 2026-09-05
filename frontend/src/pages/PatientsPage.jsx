@@ -19,8 +19,8 @@ export default function PatientsPage() {
   const fetchPatients = async () => {
     setLoading(true);
     try {
-      const { data } = await API.get('/patients?search=' + search);
-      setPatients(data);
+      const { data } = await API.get(`/patients?search=${search}&page=1&limit=50`);
+setPatients(data.patients || data);
     } catch (err) { setError('Failed to load patients.'); }
     finally { setLoading(false); }
   };
