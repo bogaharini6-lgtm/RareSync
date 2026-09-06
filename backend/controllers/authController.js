@@ -23,9 +23,9 @@ if (!passwordRegex.test(password)) {
   try {
     const hashed = await bcrypt.hash(password, 10);
     await db.execute(
-      'INSERT INTO hospitals (name, email, password, address, phone) VALUES (?,?,?,?,?)',
-      [name, email, hashed, address, phone]
-    );
+  'INSERT INTO hospitals (name, email, password, address, phone, consent_given_at) VALUES (?,?,?,?,?,NOW())',
+  [name, email, hashed, address, phone]
+);
     sendEmail({
       to: email,
       subject: 'Welcome to RareSync',
@@ -160,9 +160,9 @@ exports.doctorRegister = async (req, res) => {
   try {
     const hashed = await bcrypt.hash(password, 10);
     await db.execute(
-      'INSERT INTO doctors (name, email, password, specialization, phone, hospital_id) VALUES (?,?,?,?,?,?)',
-      [name, email, hashed, specialization, phone, hospital_id]
-    );
+  'INSERT INTO doctors (name, email, password, specialization, phone, hospital_id, consent_given_at) VALUES (?,?,?,?,?,?,NOW())',
+  [name, email, hashed, specialization, phone, hospital_id]
+);
 
     const [hospitals] = await db.execute('SELECT name, email FROM hospitals WHERE id = ?', [hospital_id]);
     const hospital = hospitals[0];

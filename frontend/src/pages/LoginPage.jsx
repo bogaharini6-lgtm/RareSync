@@ -15,9 +15,10 @@ export default function LoginPage() {
   const [resending, setResending] = useState(false);
 
   const [form, setForm] = useState({
-    name: '', email: '', password: '',
-    specialization: '', phone: '', address: '', hospital_id: ''
-  });
+  name: '', email: '', password: '',
+  specialization: '', phone: '', address: '', hospital_id: '',
+  consent: false
+});
   const [hospitals, setHospitals] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -215,11 +216,13 @@ export default function LoginPage() {
                 {isRegister && (
   <div style={{ marginBottom: 14, display: 'flex', alignItems: 'flex-start', gap: 10 }}>
     <input
-      type="checkbox"
-      id="consent"
-      required
-      style={{ marginTop: 3, flexShrink: 0, width: 16, height: 16, cursor: 'pointer' }}
-    />
+  type="checkbox"
+  id="consent"
+  required
+  checked={form.consent || false}
+  onChange={(e) => setForm({ ...form, consent: e.target.checked })}
+  style={{ marginTop: 3, flexShrink: 0, width: 16, height: 16, cursor: 'pointer' }}
+/>
     <label htmlFor="consent" style={{ fontSize: 12, color: 'var(--text2)', lineHeight: 1.6, cursor: 'pointer' }}>
       I agree to the{' '}
       <span
