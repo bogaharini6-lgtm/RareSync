@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import API from '../api/axios';
-import Navbar from '../components/Navbar';
+import Sidebar from '../components/Sidebar';
 
 const PURPOSES = [
   'Second Opinion',
@@ -137,7 +137,7 @@ export default function AccessRequestsPage() {
 
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: 'Arial, sans-serif' }}>
-      <Navbar />
+      <Sidebar />
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '28px 32px' }}>
 
         {/* Header */}

@@ -1,8 +1,8 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import API from '../api/axios';
-import Navbar from '../components/Navbar';
+import Sidebar from '../components/Sidebar';
 
 export default function PatientsPage() {
   const [patients, setPatients] = useState([]);
@@ -79,7 +79,7 @@ export default function PatientsPage() {
 
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: 'Arial,sans-serif' }}>
-      <Navbar />
+      <Sidebar />
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '28px 32px' }}>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
@@ -113,7 +113,7 @@ export default function PatientsPage() {
         )}
 
         <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: '11px 16px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span>🔍</span>
+          <span>??</span>
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={user?.role === 'doctor' ? 'Search by name or hospital...' : 'Search by name or contact...'}
             style={{ flex: 1, border: 'none', background: 'transparent', color: 'var(--text)', fontSize: 14, outline: 'none' }} />
         </div>
@@ -139,7 +139,7 @@ export default function PatientsPage() {
           <div style={{ padding: 48, textAlign: 'center', color: 'var(--text2)' }}>Loading...</div>
         ) : filtered.length === 0 ? (
           <div style={{ padding: 48, textAlign: 'center', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12 }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>👤</div>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>??</div>
             <p style={{ fontWeight: 700, color: 'var(--text)', margin: '0 0 6px 0' }}>No patients found</p>
             <p style={{ color: 'var(--text3)', fontSize: 13, margin: 0 }}>Try a different search or filter</p>
           </div>
@@ -175,15 +175,15 @@ export default function PatientsPage() {
                           </div>
                         </div>
                       </td>
-                      <td style={{ padding: '13px 16px', fontSize: 13, color: 'var(--text2)' }}>{p.age ? p.age + ' yrs' : '—'}</td>
-                      <td style={{ padding: '13px 16px', fontSize: 13, color: 'var(--text2)' }}>{p.gender || '—'}</td>
+                      <td style={{ padding: '13px 16px', fontSize: 13, color: 'var(--text2)' }}>{p.age ? p.age + ' yrs' : '�'}</td>
+                      <td style={{ padding: '13px 16px', fontSize: 13, color: 'var(--text2)' }}>{p.gender || '�'}</td>
                       <td style={{ padding: '13px 16px' }}>
                         {p.disease_names
-                          ? <span style={{ background: '#f5f3ff', color: '#7c3aed', border: '1px solid #ddd6fe', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>🧬 {p.disease_names}</span>
-                          : <span style={{ color: 'var(--text3)' }}>—</span>}
+                          ? <span style={{ background: '#f5f3ff', color: '#7c3aed', border: '1px solid #ddd6fe', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>?? {p.disease_names}</span>
+                          : <span style={{ color: 'var(--text3)' }}>�</span>}
                       </td>
                       <td style={{ padding: '13px 16px', fontSize: 13, color: 'var(--text2)' }}>
-                        {user?.role === 'doctor' ? (p.hospital_name || '—') : (p.blood_group || '—')}
+                        {user?.role === 'doctor' ? (p.hospital_name || '�') : (p.blood_group || '�')}
                       </td>
                       <td style={{ padding: '13px 16px' }} onClick={(e) => e.stopPropagation()}>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: ac.bg, color: ac.color, border: '1px solid ' + ac.color + '40' }}>
@@ -202,11 +202,11 @@ export default function PatientsPage() {
                           <button onClick={() => navigate('/patients/' + p.id)} style={{ padding: '6px 14px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>View Record</button>
                         )}
                         {user?.role === 'doctor' && p.access_status === 'pending' && (
-                          <button disabled style={{ padding: '6px 14px', background: '#fffbeb', color: '#d97706', border: '1px solid #fde68a', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'not-allowed' }}>⏳ Pending</button>
+                          <button disabled style={{ padding: '6px 14px', background: '#fffbeb', color: '#d97706', border: '1px solid #fde68a', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'not-allowed' }}>? Pending</button>
                         )}
                         {user?.role === 'doctor' && p.access_status === 'none' && (
                           <button onClick={(e) => handleRequestAccess(p.id, e)} disabled={requestingId === p.id} style={{ padding: '6px 14px', background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-                            {requestingId === p.id ? 'Sending...' : '🔐 Request Access'}
+                            {requestingId === p.id ? 'Sending...' : '?? Request Access'}
                           </button>
                         )}
                       </td>

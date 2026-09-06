@@ -1,4 +1,4 @@
-import Navbar from '../components/Navbar';
+import Sidebar from '../components/Sidebar';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -55,7 +55,7 @@ export default function AuditLogsPage() {
 
   return (
     <div style={styles.page}>
-      <Navbar />
+      <Sidebar />
 
       <div style={styles.container}>
         <div style={styles.headerRow}>

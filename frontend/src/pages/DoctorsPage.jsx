@@ -1,6 +1,6 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import API from '../api/axios';
-import Navbar from '../components/Navbar';
+import Sidebar from '../components/Sidebar';
 
 export default function DoctorsPage() {
   const [doctors, setDoctors] = useState([]);
@@ -28,14 +28,14 @@ export default function DoctorsPage() {
 
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: 'Arial, sans-serif' }}>
-      <Navbar />
+      <Sidebar />
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 32px' }}>
         <div style={{ marginBottom: 24 }}>
           <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', margin: 0 }}>Doctors</h2>
           <p style={{ color: 'var(--text2)', fontSize: 13, margin: '4px 0 0 0' }}>All doctors registered under your hospital</p>
         </div>
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: 10, padding: '0 14px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span>🔍</span>
+          <span>??</span>
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name or specialization..."
             style={{ flex: 1, padding: '11px 0', border: 'none', background: 'transparent', color: 'var(--text)', fontSize: 14, outline: 'none' }} />
         </div>
@@ -43,7 +43,7 @@ export default function DoctorsPage() {
           <p style={{ color: 'var(--text2)' }}>Loading doctors...</p>
         ) : filtered.length === 0 ? (
           <div style={{ padding: 48, textAlign: 'center', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12 }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>👨‍⚕️</div>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>?????</div>
             <p style={{ fontWeight: 700, color: 'var(--text)', margin: '0 0 6px 0' }}>No doctors found</p>
             <p style={{ color: 'var(--text3)', fontSize: 13, margin: 0 }}>No doctors registered under your hospital yet</p>
           </div>
@@ -71,8 +71,8 @@ export default function DoctorsPage() {
                         </div>
                       </div>
                     </td>
-                    <td style={{ padding: '13px 16px', fontSize: 13, color: 'var(--text2)' }}>{d.specialization || '—'}</td>
-                    <td style={{ padding: '13px 16px', fontSize: 13, color: 'var(--text2)' }}>{d.phone || '—'}</td>
+                    <td style={{ padding: '13px 16px', fontSize: 13, color: 'var(--text2)' }}>{d.specialization || '�'}</td>
+                    <td style={{ padding: '13px 16px', fontSize: 13, color: 'var(--text2)' }}>{d.phone || '�'}</td>
                     <td style={{ padding: '13px 16px', fontSize: 13, color: 'var(--text2)' }}>{d.email}</td>
                     <td style={{ padding: '13px 16px', fontSize: 13, color: 'var(--text2)' }}>
                       {new Date(d.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}

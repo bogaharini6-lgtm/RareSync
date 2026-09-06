@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import API from '../api/axios';
-import Navbar from '../components/Navbar';
+import Sidebar from '../components/Sidebar';
 
 const OPINION_TYPES = [
   'Diagnosis Review',
@@ -140,14 +140,14 @@ export default function CollaborationRoom() {
 
   if (loading) return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>
-      <Navbar />
+      <Sidebar />
       <div style={{ padding: 32, color: 'var(--text2)' }}>Loading collaboration room...</div>
     </div>
   );
 
   if (error) return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>
-      <Navbar />
+      <Sidebar />
       <div style={{ padding: 32 }}>
         <p style={{ color: 'var(--red)', marginBottom: 16 }}>{error}</p>
         <button onClick={() => navigate(`/patients/${patient_id}`)}
@@ -162,7 +162,7 @@ export default function CollaborationRoom() {
 
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: 'Arial, sans-serif' }}>
-      <Navbar />
+      <Sidebar />
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '20px 28px' }}>
 
         {/* Room Header */}

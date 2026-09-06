@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import API from '../api/axios';
-import Navbar from '../components/Navbar';
+import Sidebar from '../components/Sidebar';
 import MedicalRecordsTab from './MedicalRecordsTab';
 
 export default function PatientDetailPage() {
@@ -236,7 +236,7 @@ export default function PatientDetailPage() {
   if (error) {
     return (
       <div style={styles.page}>
-        <Navbar />
+        <Sidebar />
 
         <div style={{ padding: 32 }}>
           <p style={{ color: 'var(--red)' }}>
@@ -260,7 +260,7 @@ export default function PatientDetailPage() {
   if (!patient) {
     return (
       <div style={styles.page}>
-        <Navbar />
+        <Sidebar />
 
         <div
           style={{
@@ -276,7 +276,7 @@ export default function PatientDetailPage() {
 
   return (
     <div style={styles.page}>
-      <Navbar />
+      <Sidebar />
 
       <div style={styles.container}>
 

@@ -1,18 +1,19 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+﻿import { createContext, useContext, useEffect, useState } from 'react';
 
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
   const [isDark, setIsDark] = useState(() => {
-    return localStorage.getItem('raresync-theme') === 'dark';
+    const stored = localStorage.getItem('theme');
+    return stored ? stored === 'dark' : true; // dark mode default
   });
 
   useEffect(() => {
-    localStorage.setItem('raresync-theme', isDark ? 'dark' : 'light');
-    document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
   }, [isDark]);
 
-  const toggleTheme = () => setIsDark((prev) => !prev);
+  const toggleTheme = () => setIsDark(!isDark);
 
   return (
     <ThemeContext.Provider value={{ isDark, toggleTheme }}>

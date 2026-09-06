@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import API from '../api/axios';
-import Navbar from '../components/Navbar';
+import Sidebar from '../components/Sidebar';
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -134,14 +134,14 @@ export default function ProfilePage() {
 
   if (loading) return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: 'Arial, sans-serif' }}>
-      <Navbar />
+      <Sidebar />
       <div style={{ maxWidth: 860, margin: '0 auto', padding: 32, color: 'var(--text2)' }}>Loading profile...</div>
     </div>
   );
 
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: 'Arial, sans-serif' }}>
-      <Navbar />
+      <Sidebar />
       <div style={{ maxWidth: 860, margin: '0 auto', padding: '28px 32px' }}>
 
         {/* Profile Header */}

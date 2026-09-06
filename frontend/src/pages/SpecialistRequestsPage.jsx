@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import API from '../api/axios';
-import Navbar from '../components/Navbar';
+import Sidebar from '../components/Sidebar';
 
 export default function SpecialistRequestsPage() {
   const { user } = useAuth();
@@ -39,7 +39,7 @@ export default function SpecialistRequestsPage() {
 
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: 'Arial, sans-serif' }}>
-      <Navbar />
+      <Sidebar />
       <div style={{ maxWidth: 800, margin: '0 auto', padding: '28px 32px' }}>
         <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', margin: '0 0 6px 0' }}>
           🧑‍⚕️ Specialist Opinion Requests
