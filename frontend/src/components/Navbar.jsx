@@ -64,7 +64,9 @@ export default function Navbar() {
 
       <div style={styles.right}>
         <span style={styles.userName}>
-          {user?.role === 'doctor' ? `Dr. ${user?.name}` : user?.name}
+          {user?.role === 'doctor'
+  ? (user?.name?.startsWith('Dr.') ? user?.name : `Dr. ${user?.name}`)
+  : user?.name}
         </span>
 
         <button

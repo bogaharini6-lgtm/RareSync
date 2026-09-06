@@ -219,7 +219,8 @@ export default function LandingPage() {
           Rare<span style={{ color: 'var(--accent2)' }}>Sync</span>
         </div>
         <p style={styles.footerText}>
-          © 2024 RareSync · Built with Node.js, React and MySQL · All rights reserved
+          © {new Date().getFullYear()} RareSync
+           · Built with Node.js, React and MySQL · All rights reserved
         </p>
       </footer>
 
