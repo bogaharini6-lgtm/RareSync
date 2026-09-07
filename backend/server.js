@@ -26,7 +26,7 @@ const loginLimiter = rateLimit({
 // OTP limit — 5 attempts per 15 minutes
 const otpLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: 20,
   message: { message: 'Too many OTP attempts. Please try again in 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,

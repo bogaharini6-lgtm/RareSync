@@ -258,7 +258,7 @@ exports.doctorVerifyOTP = async (req, res) => {
     if (otpRows[0].otp !== otp.trim()) {
   const currentAttempts = otpRows[0].attempts || 0;
 
-  if (currentAttempts >= 4) {
+  if (currentAttempts >= 9) {
     await db.execute('UPDATE otp_codes SET used = TRUE WHERE id = ?', [otpRows[0].id]);
     return res.status(400).json({ message: 'Too many incorrect attempts. Please login again to get a new OTP.' });
   }
