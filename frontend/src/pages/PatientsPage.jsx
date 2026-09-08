@@ -1,4 +1,12 @@
-﻿import { useState, useEffect } from 'react';
+﻿const [showRequestModal, setShowRequestModal] = useState(false);
+const [selectedPatient, setSelectedPatient] = useState(null);
+const [requestForm, setRequestForm] = useState({
+  purpose: 'Second Opinion',
+  duration_days: 30,
+  requested_info: [],
+  reason: '',
+});
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import API from '../api/axios';
@@ -42,23 +50,44 @@ export default function PatientsPage() {
     } catch (err) { setError(err.response?.data?.message || 'Failed to add patient.'); }
   };
 
-  const handleRequestAccess = async (patientId, e) => {
+  const handleRequestAccess = (patient, e) => {
   e.stopPropagation();
-  setRequestingId(patientId);
+  setSelectedPatient(patient);
+  setShowRequestModal(true);
+};
+
+const handleSubmitRequest = async () => {
+  if (requestForm.requested_info.length === 0) {
+    alert('Please select at least one type of information.');
+    return;
+  }
+  setRequestingId(selectedPatient.id);
   try {
     await API.post('/access/request', {
-      patient_id: patientId,
-      purpose: 'Second Opinion',
-      duration_days: 30,
-      reason: 'Requesting access to view patient records.',
-      requested_info: 'Medical History, Diagnosis',
+      patient_id: selectedPatient.id,
+      purpose: requestForm.purpose,
+      duration_days: requestForm.duration_days,
+      requested_info: requestForm.requested_info.join(', '),
+      reason: requestForm.reason || 'Requesting access to view patient records.',
     });
+    setShowRequestModal(false);
+    setSelectedPatient(null);
+    setRequestForm({ purpose: 'Second Opinion', duration_days: 30, requested_info: [], reason: '' });
     fetchPatients();
   } catch (err) {
     alert(err.response?.data?.message || 'Failed to submit request.');
   } finally {
     setRequestingId(null);
   }
+};
+
+const toggleInfo = (info) => {
+  setRequestForm((prev) => ({
+    ...prev,
+    requested_info: prev.requested_info.includes(info)
+      ? prev.requested_info.filter(i => i !== info)
+      : [...prev.requested_info, info],
+  }));
 };
   const handleDelete = async (id, name, e) => {
     e.stopPropagation();
@@ -214,10 +243,13 @@ export default function PatientsPage() {
                           <button disabled style={{ padding: '6px 14px', background: '#fffbeb', color: '#d97706', border: '1px solid #fde68a', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'not-allowed' }}>? Pending</button>
                         )}
                         {user?.role === 'doctor' && p.access_status === 'none' && (
-                          <button onClick={(e) => handleRequestAccess(p.id, e)} disabled={requestingId === p.id} style={{ padding: '6px 14px', background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-                            {requestingId === p.id ? 'Sending...' : '?? Request Access'}
-                          </button>
-                        )}
+  <button
+    onClick={(e) => handleRequestAccess(p, e)}
+    disabled={requestingId === p.id}
+    style={{ padding: '6px 14px', background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+    {requestingId === p.id ? 'Sending...' : '🔐 Request Access'}
+  </button>
+)}
                       </td>
                     </tr>
                   );
@@ -230,6 +262,73 @@ export default function PatientsPage() {
           </div>
         )}
       </div>
+    {/* Request Access Modal */}
+{showRequestModal && selectedPatient && (
+  <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+    <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: 28, width: '100%', maxWidth: 520, maxHeight: '90vh', overflow: 'auto' }}>
+      <h3 style={{ margin: '0 0 6px 0', fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>
+        Request Access
+      </h3>
+      <p style={{ fontSize: 13, color: 'var(--text2)', margin: '0 0 20px 0' }}>
+        Patient: <strong>{selectedPatient.name}</strong> · {selectedPatient.hospital_name}
+      </p>
+
+      {/* Purpose */}
+      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, margin: '0 0 8px 0' }}>Purpose</p>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+        {['Second Opinion', 'Treatment Planning', 'Research', 'Referral', 'Follow-up Care', 'Emergency', 'Consultation'].map((p) => (
+          <button key={p} type="button" onClick={() => setRequestForm({ ...requestForm, purpose: p })}
+            style={{ padding: '7px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: '1.5px solid', background: requestForm.purpose === p ? 'var(--accent)' : 'var(--bg3)', color: requestForm.purpose === p ? '#fff' : 'var(--text2)', borderColor: requestForm.purpose === p ? 'var(--accent)' : 'var(--border2)' }}>
+            {p}
+          </button>
+        ))}
+      </div>
+
+      {/* Duration */}
+      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, margin: '0 0 8px 0' }}>Access Duration</p>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+        {[7, 14, 30, 60, 90].map((d) => (
+          <button key={d} type="button" onClick={() => setRequestForm({ ...requestForm, duration_days: d })}
+            style={{ padding: '7px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: '1.5px solid', background: requestForm.duration_days === d ? 'var(--accent)' : 'var(--bg3)', color: requestForm.duration_days === d ? '#fff' : 'var(--text2)', borderColor: requestForm.duration_days === d ? 'var(--accent)' : 'var(--border2)' }}>
+            {d} days
+          </button>
+        ))}
+      </div>
+
+      {/* Requested Info */}
+      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, margin: '0 0 8px 0' }}>Requested Information</p>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+        {['Medical History', 'Diagnosis', 'Reports / Lab Results', 'Treatment History', 'Prescriptions', 'Visit History', 'Doctor Notes'].map((info) => (
+          <button key={info} type="button" onClick={() => toggleInfo(info)}
+            style={{ padding: '6px 12px', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: '1.5px solid', background: requestForm.requested_info.includes(info) ? 'var(--gbg)' : 'var(--bg3)', color: requestForm.requested_info.includes(info) ? 'var(--green)' : 'var(--text2)', borderColor: requestForm.requested_info.includes(info) ? 'var(--gborder)' : 'var(--border2)' }}>
+            {requestForm.requested_info.includes(info) ? '✓ ' : ''}{info}
+          </button>
+        ))}
+      </div>
+
+      {/* Reason */}
+      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, margin: '0 0 8px 0' }}>Additional Reason (optional)</p>
+      <textarea
+        value={requestForm.reason}
+        onChange={(e) => setRequestForm({ ...requestForm, reason: e.target.value })}
+        placeholder="Provide context for your request..."
+        rows={3}
+        style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border2)', background: 'var(--bg3)', color: 'var(--text)', fontSize: 13, resize: 'vertical', fontFamily: 'Arial', boxSizing: 'border-box', marginBottom: 20 }}
+      />
+
+      <div style={{ display: 'flex', gap: 10 }}>
+        <button onClick={handleSubmitRequest} disabled={requestingId === selectedPatient?.id}
+          style={{ padding: '10px 24px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+          {requestingId === selectedPatient?.id ? 'Submitting...' : 'Submit Request'}
+        </button>
+        <button onClick={() => { setShowRequestModal(false); setSelectedPatient(null); }}
+          style={{ padding: '10px 16px', background: 'transparent', border: '1px solid var(--border2)', color: 'var(--text2)', borderRadius: 8, fontSize: 14, cursor: 'pointer' }}>
+          Cancel
+        </button>
+      </div>
     </div>
+  </div>
+)}
+</div>
   );
 }
