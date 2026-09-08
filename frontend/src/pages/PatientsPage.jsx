@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+ï»¿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import API from '../api/axios';
@@ -43,14 +43,23 @@ export default function PatientsPage() {
   };
 
   const handleRequestAccess = async (patientId, e) => {
-    e.stopPropagation(); setRequestingId(patientId);
-    try {
-      await API.post('/access/request', { patient_id: patientId, reason: 'Requesting access to view patient records.' });
-      fetchPatients();
-    } catch (err) { alert(err.response?.data?.message || 'Failed to submit request.'); }
-    finally { setRequestingId(null); }
-  };
-
+  e.stopPropagation();
+  setRequestingId(patientId);
+  try {
+    await API.post('/access/request', {
+      patient_id: patientId,
+      purpose: 'Second Opinion',
+      duration_days: 30,
+      reason: 'Requesting access to view patient records.',
+      requested_info: 'Medical History, Diagnosis',
+    });
+    fetchPatients();
+  } catch (err) {
+    alert(err.response?.data?.message || 'Failed to submit request.');
+  } finally {
+    setRequestingId(null);
+  }
+};
   const handleDelete = async (id, name, e) => {
     e.stopPropagation();
     if (!window.confirm('Delete patient "' + name + '"?')) return;
@@ -175,15 +184,15 @@ export default function PatientsPage() {
                           </div>
                         </div>
                       </td>
-                      <td style={{ padding: '13px 16px', fontSize: 13, color: 'var(--text2)' }}>{p.age ? p.age + ' yrs' : '—'}</td>
-                      <td style={{ padding: '13px 16px', fontSize: 13, color: 'var(--text2)' }}>{p.gender || '—'}</td>
+                      <td style={{ padding: '13px 16px', fontSize: 13, color: 'var(--text2)' }}>{p.age ? p.age + ' yrs' : 'ï¿½'}</td>
+                      <td style={{ padding: '13px 16px', fontSize: 13, color: 'var(--text2)' }}>{p.gender || 'ï¿½'}</td>
                       <td style={{ padding: '13px 16px' }}>
                         {p.disease_names
                           ? <span style={{ background: '#f5f3ff', color: '#7c3aed', border: '1px solid #ddd6fe', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>?? {p.disease_names}</span>
-                          : <span style={{ color: 'var(--text3)' }}>—</span>}
+                          : <span style={{ color: 'var(--text3)' }}>ï¿½</span>}
                       </td>
                       <td style={{ padding: '13px 16px', fontSize: 13, color: 'var(--text2)' }}>
-                        {user?.role === 'doctor' ? (p.hospital_name || '—') : (p.blood_group || '—')}
+                        {user?.role === 'doctor' ? (p.hospital_name || 'ï¿½') : (p.blood_group || 'ï¿½')}
                       </td>
                       <td style={{ padding: '13px 16px' }} onClick={(e) => e.stopPropagation()}>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: ac.bg, color: ac.color, border: '1px solid ' + ac.color + '40' }}>
