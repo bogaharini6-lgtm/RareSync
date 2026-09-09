@@ -1,16 +1,8 @@
-﻿const [showRequestModal, setShowRequestModal] = useState(false);
-const [selectedPatient, setSelectedPatient] = useState(null);
-const [requestForm, setRequestForm] = useState({
-  purpose: 'Second Opinion',
-  duration_days: 30,
-  requested_info: [],
-  reason: '',
-});
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import API from '../api/axios';
-import Sidebar from '../components/Sidebar';
+import Navbar from '../components/Navbar';
 
 export default function PatientsPage() {
   const [patients, setPatients] = useState([]);
@@ -20,315 +12,389 @@ export default function PatientsPage() {
   const [filter, setFilter] = useState('all');
   const [error, setError] = useState('');
   const [requestingId, setRequestingId] = useState(null);
-  const [form, setForm] = useState({ name: '', dob: '', gender: 'Male', contact: '', address: '', blood_group: '', emergency_contact: '' });
+  const [form, setForm] = useState({
+    name: '', dob: '', gender: 'Male', contact: '',
+    address: '', blood_group: '', emergency_contact: '',
+  });
+
   const { user } = useAuth();
   const navigate = useNavigate();
 
   const fetchPatients = async () => {
     setLoading(true);
     try {
-      const { data } = await API.get(`/patients?search=${search}&page=1&limit=50`);
-    setPatients(Array.isArray(data) ? data : (data.patients || []));
-    } catch (err) { setError('Failed to load patients.'); }
-    finally { setLoading(false); }
+      const { data } = await API.get(`/patients?search=${search}`);
+      setPatients(data);
+    } catch (err) {
+      setError('Failed to load patients.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    const t = setTimeout(() => fetchPatients(), 300);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => fetchPatients(), 300);
+    return () => clearTimeout(timer);
   }, [search]);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleAdd = async (e) => {
-    e.preventDefault(); setError('');
+    e.preventDefault();
+    setError('');
     try {
       await API.post('/patients', form);
       setShowForm(false);
       setForm({ name: '', dob: '', gender: 'Male', contact: '', address: '', blood_group: '', emergency_contact: '' });
       fetchPatients();
-    } catch (err) { setError(err.response?.data?.message || 'Failed to add patient.'); }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to add patient.');
+    }
   };
 
-  const handleRequestAccess = (patient, e) => {
-  e.stopPropagation();
-  setSelectedPatient(patient);
-  setShowRequestModal(true);
-};
+  const handleRequestAccess = async (patientId, e) => {
+    e.stopPropagation();
+    setRequestingId(patientId);
+    try {
+      await API.post('/access/request', {
+        patient_id: patientId,
+        reason: 'Requesting access to view patient records.',
+      });
+      fetchPatients();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to submit request.');
+    } finally {
+      setRequestingId(null);
+    }
+  };
 
-const handleSubmitRequest = async () => {
-  if (requestForm.requested_info.length === 0) {
-    alert('Please select at least one type of information.');
-    return;
-  }
-  setRequestingId(selectedPatient.id);
-  try {
-    await API.post('/access/request', {
-      patient_id: selectedPatient.id,
-      purpose: requestForm.purpose,
-      duration_days: requestForm.duration_days,
-      requested_info: requestForm.requested_info.join(', '),
-      reason: requestForm.reason || 'Requesting access to view patient records.',
-    });
-    setShowRequestModal(false);
-    setSelectedPatient(null);
-    setRequestForm({ purpose: 'Second Opinion', duration_days: 30, requested_info: [], reason: '' });
-    fetchPatients();
-  } catch (err) {
-    alert(err.response?.data?.message || 'Failed to submit request.');
-  } finally {
-    setRequestingId(null);
-  }
-};
-
-const toggleInfo = (info) => {
-  setRequestForm((prev) => ({
-    ...prev,
-    requested_info: prev.requested_info.includes(info)
-      ? prev.requested_info.filter(i => i !== info)
-      : [...prev.requested_info, info],
-  }));
-};
   const handleDelete = async (id, name, e) => {
     e.stopPropagation();
-    if (!window.confirm('Delete patient "' + name + '"?')) return;
-    try { await API.delete('/patients/' + id); fetchPatients(); }
-    catch (err) { alert('Failed to delete patient.'); }
+    if (!window.confirm(`Delete patient "${name}"?`)) return;
+    try {
+      await API.delete(`/patients/${id}`);
+      fetchPatients();
+    } catch (err) {
+      alert('Failed to delete patient.');
+    }
   };
 
-  const filtered = patients.filter((p) => {
+  const filteredPatients = patients.filter((p) => {
     if (filter === 'all') return true;
-    if (filter === 'mine') return p.access_status === 'assigned';
-    if (filter === 'full') return p.access_status === 'approved';
+    if (filter === 'assigned') return p.access_status === 'assigned';
+    if (filter === 'approved') return p.access_status === 'approved';
     if (filter === 'pending') return p.access_status === 'pending';
-    if (filter === 'limited') return p.access_status === 'none';
+    if (filter === 'none') return p.access_status === 'none';
     return true;
   });
 
-  const ACCESS_CONFIG = {
-    assigned: { label: 'Your Patient', bg: '#eff6ff', color: '#2563eb' },
-    approved: { label: 'Full Access',  bg: '#f0fdf4', color: '#16a34a' },
-    pending:  { label: 'Pending',      bg: '#fffbeb', color: '#d97706' },
-    none:     { label: 'Limited',      bg: '#fef2f2', color: '#dc2626' },
+  const counts = {
+    all: patients.length,
+    assigned: patients.filter(p => p.access_status === 'assigned').length,
+    approved: patients.filter(p => p.access_status === 'approved').length,
+    pending: patients.filter(p => p.access_status === 'pending').length,
+    none: patients.filter(p => p.access_status === 'none').length,
   };
 
-  const inp = { width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border2)', background: 'var(--bg3)', color: 'var(--text)', fontSize: 13, boxSizing: 'border-box' };
-  const lbl = { display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 5 };
-
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: 'Arial,sans-serif' }}>
-      <Sidebar />
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '28px 32px' }}>
+    <div style={styles.page}>
+      <Navbar />
+      <div style={styles.container}>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        {/* Header */}
+        <div style={styles.headerRow}>
           <div>
-            <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text)', margin: 0 }}>Patient Directory</h2>
-            <p style={{ color: 'var(--text2)', fontSize: 13, margin: '4px 0 0 0' }}>{patients.length} patients found</p>
+            <h2 style={styles.pageTitle}>
+              {user?.role === 'doctor' ? 'All Patients' : 'Patients'}
+            </h2>
+            <p style={styles.pageSubtitle}>
+              {user?.role === 'doctor'
+                ? 'Browse patients across all hospitals — request access to view full records'
+                : 'Manage all patients in your hospital'}
+            </p>
           </div>
-          <button onClick={() => setShowForm(!showForm)} style={{ padding: '10px 20px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+          <button onClick={() => setShowForm(!showForm)} style={styles.addBtn}>
             {showForm ? 'Cancel' : '+ Add Patient'}
           </button>
         </div>
 
+        {/* Add Patient Form */}
         {showForm && (
-          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 24, marginBottom: 24 }}>
-            <h3 style={{ margin: '0 0 18px 0', fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>New Patient</h3>
-            <form onSubmit={handleAdd}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14, marginBottom: 14 }}>
-                <div><label style={lbl}>Full Name *</label><input name="name" placeholder="Full name" value={form.name} onChange={handleChange} required style={inp} /></div>
-                <div><label style={lbl}>Contact</label><input name="contact" placeholder="Phone" value={form.contact} onChange={handleChange} style={inp} /></div>
-                <div><label style={lbl}>Blood Group</label><input name="blood_group" placeholder="e.g. O+" value={form.blood_group} onChange={handleChange} style={inp} /></div>
-                <div><label style={lbl}>Emergency Contact</label><input name="emergency_contact" placeholder="Emergency phone" value={form.emergency_contact} onChange={handleChange} style={inp} /></div>
-                <div><label style={lbl}>Date of Birth</label><input type="date" name="dob" value={form.dob} onChange={handleChange} style={inp} /></div>
-                <div><label style={lbl}>Gender</label><select name="gender" value={form.gender} onChange={handleChange} style={inp}><option>Male</option><option>Female</option><option>Other</option></select></div>
-                <div style={{ gridColumn: '1/-1' }}><label style={lbl}>Address</label><input name="address" placeholder="Address" value={form.address} onChange={handleChange} style={inp} /></div>
+          <form onSubmit={handleAdd} style={styles.formBox}>
+            <h3 style={{ margin: '0 0 16px 0', color: 'var(--text)', fontSize: 15 }}>Add New Patient</h3>
+            <div style={styles.formGrid}>
+              <div style={styles.formField}>
+                <label style={styles.label}>Full Name *</label>
+                <input style={styles.input} name="name" placeholder="Enter full name" value={form.name} onChange={handleChange} required />
               </div>
-              {error && <p style={{ color: 'var(--red)', fontSize: 13, margin: '0 0 12px 0' }}>{error}</p>}
-              <button type="submit" style={{ padding: '9px 22px', background: 'var(--green)', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', marginRight: 10 }}>Save</button>
-              <button type="button" onClick={() => setShowForm(false)} style={{ padding: '9px 16px', background: 'transparent', border: '1px solid var(--border2)', color: 'var(--text2)', borderRadius: 8, fontSize: 13, cursor: 'pointer' }}>Cancel</button>
-            </form>
-          </div>
+              <div style={styles.formField}>
+                <label style={styles.label}>Date of Birth</label>
+                <input style={styles.input} name="dob" type="date" value={form.dob} onChange={handleChange} />
+              </div>
+              <div style={styles.formField}>
+                <label style={styles.label}>Gender</label>
+                <select style={styles.input} name="gender" value={form.gender} onChange={handleChange}>
+                  <option>Male</option>
+                  <option>Female</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div style={styles.formField}>
+                <label style={styles.label}>Contact Number</label>
+                <input style={styles.input} name="contact" placeholder="Phone number" value={form.contact} onChange={handleChange} />
+              </div>
+              <div style={styles.formField}>
+                <label style={styles.label}>Blood Group</label>
+                <input style={styles.input} name="blood_group" placeholder="e.g. O+" value={form.blood_group} onChange={handleChange} />
+              </div>
+              <div style={styles.formField}>
+                <label style={styles.label}>Emergency Contact</label>
+                <input style={styles.input} name="emergency_contact" placeholder="Emergency phone" value={form.emergency_contact} onChange={handleChange} />
+              </div>
+              <div style={{ ...styles.formField, gridColumn: '1 / -1' }}>
+                <label style={styles.label}>Address</label>
+                <input style={styles.input} name="address" placeholder="Full address" value={form.address} onChange={handleChange} />
+              </div>
+            </div>
+            {error && <p style={styles.error}>{error}</p>}
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button type="submit" style={styles.saveBtn}>Save Patient</button>
+              <button type="button" onClick={() => setShowForm(false)} style={styles.cancelBtn}>Cancel</button>
+            </div>
+          </form>
         )}
 
-        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: '11px 16px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span>??</span>
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={user?.role === 'doctor' ? 'Search by name or hospital...' : 'Search by name or contact...'}
-            style={{ flex: 1, border: 'none', background: 'transparent', color: 'var(--text)', fontSize: 14, outline: 'none' }} />
+        {/* Search */}
+        <div style={styles.searchBox}>
+          <span style={styles.searchIcon}>🔍</span>
+          <input
+            placeholder={user?.role === 'doctor' ? 'Search by patient name or hospital...' : 'Search by name or contact...'}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={styles.searchInput}
+          />
         </div>
 
+        {/* Doctor Filter Tabs */}
         {user?.role === 'doctor' && (
-          <div style={{ display: 'flex', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>
+          <div style={styles.filterRow}>
             {[
-              { key: 'all', label: 'All', count: patients.length, color: '#2563eb', bg: '#eff6ff' },
-              { key: 'mine', label: 'Your Patients', count: patients.filter(p => p.access_status === 'assigned').length, color: '#2563eb', bg: '#eff6ff' },
-              { key: 'full', label: 'Full Access', count: patients.filter(p => p.access_status === 'approved').length, color: '#16a34a', bg: '#f0fdf4' },
-              { key: 'pending', label: 'Pending', count: patients.filter(p => p.access_status === 'pending').length, color: '#d97706', bg: '#fffbeb' },
-              { key: 'limited', label: 'Limited', count: patients.filter(p => p.access_status === 'none').length, color: '#dc2626', bg: '#fef2f2' },
+              { key: 'all',      label: 'All Patients',   color: 'var(--accent)' },
+              { key: 'assigned', label: 'Your Patients',  color: 'var(--accent)' },
+              { key: 'approved', label: 'Full Access',    color: 'var(--green)'  },
+              { key: 'pending',  label: 'Pending',        color: 'var(--orange)' },
+              { key: 'none',     label: 'Limited Access', color: 'var(--red)'    },
             ].map((f) => (
-              <button key={f.key} onClick={() => setFilter(f.key)} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 14px', background: filter === f.key ? f.bg : 'var(--card)', border: filter === f.key ? '1.5px solid ' + f.color : '1px solid var(--border2)', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 700, color: filter === f.key ? f.color : 'var(--text2)' }}>
+              <button
+                key={f.key}
+                onClick={() => setFilter(f.key)}
+                style={{
+                  ...styles.filterTab,
+                  ...(filter === f.key ? { background: 'var(--bg3)', borderColor: f.color, color: f.color, fontWeight: 700 } : {}),
+                }}
+              >
                 {f.label}
-                <span style={{ padding: '1px 7px', borderRadius: 20, fontSize: 10, fontWeight: 800, background: filter === f.key ? f.color : 'var(--bg3)', color: filter === f.key ? '#fff' : 'var(--text3)' }}>{f.count}</span>
+                <span style={{
+                  ...styles.filterBadge,
+                  background: filter === f.key ? f.color : 'var(--bg4)',
+                  color: filter === f.key ? '#fff' : 'var(--text3)',
+                }}>
+                  {counts[f.key]}
+                </span>
               </button>
             ))}
           </div>
         )}
 
+        {/* Table */}
         {loading ? (
-          <div style={{ padding: 48, textAlign: 'center', color: 'var(--text2)' }}>Loading...</div>
-        ) : filtered.length === 0 ? (
-          <div style={{ padding: 48, textAlign: 'center', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12 }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>??</div>
-            <p style={{ fontWeight: 700, color: 'var(--text)', margin: '0 0 6px 0' }}>No patients found</p>
-            <p style={{ color: 'var(--text3)', fontSize: 13, margin: 0 }}>Try a different search or filter</p>
+          <div style={styles.loadingBox}>
+            <p style={{ color: 'var(--text2)' }}>Loading patients...</p>
+          </div>
+        ) : filteredPatients.length === 0 ? (
+          <div style={styles.emptyBox}>
+            <div style={styles.emptyIcon}>👤</div>
+            <p style={styles.emptyTitle}>No patients found</p>
+            <p style={styles.emptyDesc}>
+              {filter !== 'all' ? 'Try a different filter tab' : 'No patients registered yet'}
+            </p>
           </div>
         ) : (
-          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div style={styles.tableWrap}>
+            <table style={styles.table}>
               <thead>
-                <tr style={{ background: 'var(--bg3)', borderBottom: '2px solid var(--border)' }}>
-                  {['Patient', 'Age', 'Gender', 'Rare Disease', user?.role === 'doctor' ? 'Hospital' : 'Blood Group', 'Access Level', 'Action'].map((h) => (
-                    <th key={h} style={{ textAlign: 'left', padding: '13px 16px', fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.6 }}>{h}</th>
-                  ))}
+                <tr style={styles.thead}>
+                  <th style={styles.th}>Patient</th>
+                  <th style={styles.th}>Age</th>
+                  <th style={styles.th}>Gender</th>
+                  <th style={styles.th}>Rare Disease</th>
+                  {user?.role === 'doctor' && <th style={styles.th}>Hospital</th>}
+                  {user?.role === 'hospital' && <th style={styles.th}>Blood Group</th>}
+                  <th style={styles.th}>Access</th>
+                  <th style={styles.th}>Action</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((p, i) => {
-                  const canView = p.access_status === 'assigned' || p.access_status === 'approved' || user?.role === 'hospital';
-                  const ac = user?.role === 'hospital' ? { label: 'Full Access', bg: '#f0fdf4', color: '#16a34a' } : (ACCESS_CONFIG[p.access_status] || ACCESS_CONFIG.none);
-                  return (
-                    <tr key={p.id}
-                      onClick={canView ? () => navigate('/patients/' + p.id) : undefined}
-                      onMouseEnter={(e) => { if (canView) e.currentTarget.style.background = 'var(--bg4)'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = i % 2 === 0 ? 'var(--bg2)' : 'transparent'; }}
-                      style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'var(--bg2)' : 'transparent', cursor: canView ? 'pointer' : 'default' }}>
+                {filteredPatients.map((p, index) => {
+                  const isClickable =
+                    p.access_status === 'assigned' ||
+                    p.access_status === 'approved' ||
+                    user?.role === 'hospital';
 
-                      <td style={{ padding: '13px 16px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-                          <div style={{ width: 36, height: 36, borderRadius: '50%', background: ac.color, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, flexShrink: 0 }}>
+                  return (
+                    <tr
+                      key={p.id}
+                      style={{
+                        ...styles.tr,
+                        background: index % 2 === 0 ? 'var(--bg2)' : 'var(--bg3)',
+                        cursor: isClickable ? 'pointer' : 'default',
+                      }}
+                      onClick={isClickable ? () => navigate(`/patients/${p.id}`) : undefined}
+                    >
+                      <td style={styles.td}>
+                        <div style={styles.nameCell}>
+                          <div style={{
+                            ...styles.avatar,
+                            background:
+                              p.access_status === 'assigned' ? 'var(--accent)' :
+                              p.access_status === 'approved' ? 'var(--green)' :
+                              p.access_status === 'pending' ? 'var(--orange)' :
+                              'var(--text3)',
+                          }}>
                             {p.name?.charAt(0).toUpperCase()}
                           </div>
-                          <div>
-                            <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: 'var(--text)' }}>{p.name}</p>
-                            <p style={{ margin: 0, fontSize: 11, color: 'var(--text3)' }}>ID #{p.id}</p>
-                          </div>
+                          <span style={styles.patientName}>{p.name}</span>
                         </div>
                       </td>
-                      <td style={{ padding: '13px 16px', fontSize: 13, color: 'var(--text2)' }}>{p.age ? p.age + ' yrs' : '�'}</td>
-                      <td style={{ padding: '13px 16px', fontSize: 13, color: 'var(--text2)' }}>{p.gender || '�'}</td>
-                      <td style={{ padding: '13px 16px' }}>
-                        {p.disease_names
-                          ? <span style={{ background: '#f5f3ff', color: '#7c3aed', border: '1px solid #ddd6fe', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>?? {p.disease_names}</span>
-                          : <span style={{ color: 'var(--text3)' }}>�</span>}
+                      <td style={styles.td}>
+                        <span style={styles.cellText}>{p.age ? `${p.age} yrs` : '—'}</span>
                       </td>
-                      <td style={{ padding: '13px 16px', fontSize: 13, color: 'var(--text2)' }}>
-                        {user?.role === 'doctor' ? (p.hospital_name || '�') : (p.blood_group || '�')}
+                      <td style={styles.td}>
+                        <span style={styles.cellText}>{p.gender || '—'}</span>
                       </td>
-                      <td style={{ padding: '13px 16px' }} onClick={(e) => e.stopPropagation()}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: ac.bg, color: ac.color, border: '1px solid ' + ac.color + '40' }}>
-                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: ac.color }} />
-                          {ac.label}
-                        </span>
+                      <td style={styles.td}>
+                        {p.disease_names ? (
+                          <span style={styles.diseaseBadge}>🧬 {p.disease_names}</span>
+                        ) : (
+                          <span style={styles.noneText}>—</span>
+                        )}
                       </td>
-                      <td style={{ padding: '13px 16px' }} onClick={(e) => e.stopPropagation()}>
+                      {user?.role === 'doctor' && (
+                        <td style={styles.td}>
+                          <span style={styles.hospitalText}>🏥 {p.hospital_name}</span>
+                        </td>
+                      )}
+                      {user?.role === 'hospital' && (
+                        <td style={styles.td}>
+                          <span style={styles.cellText}>{p.blood_group || '—'}</span>
+                        </td>
+                      )}
+                      <td style={styles.td} onClick={(e) => e.stopPropagation()}>
+                        {user?.role === 'hospital' ? (
+                          <span style={{ ...styles.badge, ...styles.badgeFull }}>Full Access</span>
+                        ) : p.access_status === 'assigned' ? (
+                          <span style={{ ...styles.badge, ...styles.badgeAssigned }}>Your Patient</span>
+                        ) : p.access_status === 'approved' ? (
+                          <span style={{ ...styles.badge, ...styles.badgeFull }}>Full Access</span>
+                        ) : p.access_status === 'pending' ? (
+                          <span style={{ ...styles.badge, ...styles.badgePending }}>Pending</span>
+                        ) : (
+                          <span style={{ ...styles.badge, ...styles.badgeLimited }}>Limited</span>
+                        )}
+                      </td>
+                      <td style={styles.td} onClick={(e) => e.stopPropagation()}>
                         {user?.role === 'hospital' && (
-                          <div style={{ display: 'flex', gap: 6 }}>
-                            <button onClick={() => navigate('/patients/' + p.id)} style={{ padding: '6px 14px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>View</button>
-                            <button onClick={(e) => handleDelete(p.id, p.name, e)} style={{ padding: '6px 12px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Delete</button>
+                          <div style={styles.actionRow}>
+                            <button onClick={() => navigate(`/patients/${p.id}`)} style={styles.viewBtn}>View</button>
+                            <button onClick={(e) => handleDelete(p.id, p.name, e)} style={styles.deleteBtn}>Delete</button>
                           </div>
                         )}
-                        {user?.role === 'doctor' && canView && (
-                          <button onClick={() => navigate('/patients/' + p.id)} style={{ padding: '6px 14px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>View Record</button>
+                        {user?.role === 'doctor' && (
+                          <>
+                            {(p.access_status === 'assigned' || p.access_status === 'approved') && (
+                              <button onClick={() => navigate(`/patients/${p.id}`)} style={styles.viewBtn}>View Record</button>
+                            )}
+                            {p.access_status === 'pending' && (
+                              <button style={styles.pendingBtn} disabled>⏳ Pending</button>
+                            )}
+                            {p.access_status === 'none' && (
+                              <button
+                                onClick={(e) => handleRequestAccess(p.id, e)}
+                                style={styles.requestBtn}
+                                disabled={requestingId === p.id}
+                              >
+                                {requestingId === p.id ? '...' : '🔐 Request'}
+                              </button>
+                            )}
+                          </>
                         )}
-                        {user?.role === 'doctor' && p.access_status === 'pending' && (
-                          <button disabled style={{ padding: '6px 14px', background: '#fffbeb', color: '#d97706', border: '1px solid #fde68a', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'not-allowed' }}>? Pending</button>
-                        )}
-                        {user?.role === 'doctor' && p.access_status === 'none' && (
-  <button
-    onClick={(e) => handleRequestAccess(p, e)}
-    disabled={requestingId === p.id}
-    style={{ padding: '6px 14px', background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-    {requestingId === p.id ? 'Sending...' : '🔐 Request Access'}
-  </button>
-)}
                       </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
-            <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', background: 'var(--bg3)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 12, color: 'var(--text3)' }}>Showing <strong>{filtered.length}</strong> of <strong>{patients.length}</strong> patients</span>
-            </div>
           </div>
         )}
-      </div>
-    {/* Request Access Modal */}
-{showRequestModal && selectedPatient && (
-  <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-    <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: 28, width: '100%', maxWidth: 520, maxHeight: '90vh', overflow: 'auto' }}>
-      <h3 style={{ margin: '0 0 6px 0', fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>
-        Request Access
-      </h3>
-      <p style={{ fontSize: 13, color: 'var(--text2)', margin: '0 0 20px 0' }}>
-        Patient: <strong>{selectedPatient.name}</strong> · {selectedPatient.hospital_name}
-      </p>
 
-      {/* Purpose */}
-      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, margin: '0 0 8px 0' }}>Purpose</p>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-        {['Second Opinion', 'Treatment Planning', 'Research', 'Referral', 'Follow-up Care', 'Emergency', 'Consultation'].map((p) => (
-          <button key={p} type="button" onClick={() => setRequestForm({ ...requestForm, purpose: p })}
-            style={{ padding: '7px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: '1.5px solid', background: requestForm.purpose === p ? 'var(--accent)' : 'var(--bg3)', color: requestForm.purpose === p ? '#fff' : 'var(--text2)', borderColor: requestForm.purpose === p ? 'var(--accent)' : 'var(--border2)' }}>
-            {p}
-          </button>
-        ))}
-      </div>
-
-      {/* Duration */}
-      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, margin: '0 0 8px 0' }}>Access Duration</p>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-        {[7, 14, 30, 60, 90].map((d) => (
-          <button key={d} type="button" onClick={() => setRequestForm({ ...requestForm, duration_days: d })}
-            style={{ padding: '7px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: '1.5px solid', background: requestForm.duration_days === d ? 'var(--accent)' : 'var(--bg3)', color: requestForm.duration_days === d ? '#fff' : 'var(--text2)', borderColor: requestForm.duration_days === d ? 'var(--accent)' : 'var(--border2)' }}>
-            {d} days
-          </button>
-        ))}
-      </div>
-
-      {/* Requested Info */}
-      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, margin: '0 0 8px 0' }}>Requested Information</p>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-        {['Medical History', 'Diagnosis', 'Reports / Lab Results', 'Treatment History', 'Prescriptions', 'Visit History', 'Doctor Notes'].map((info) => (
-          <button key={info} type="button" onClick={() => toggleInfo(info)}
-            style={{ padding: '6px 12px', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: '1.5px solid', background: requestForm.requested_info.includes(info) ? 'var(--gbg)' : 'var(--bg3)', color: requestForm.requested_info.includes(info) ? 'var(--green)' : 'var(--text2)', borderColor: requestForm.requested_info.includes(info) ? 'var(--gborder)' : 'var(--border2)' }}>
-            {requestForm.requested_info.includes(info) ? '✓ ' : ''}{info}
-          </button>
-        ))}
-      </div>
-
-      {/* Reason */}
-      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, margin: '0 0 8px 0' }}>Additional Reason (optional)</p>
-      <textarea
-        value={requestForm.reason}
-        onChange={(e) => setRequestForm({ ...requestForm, reason: e.target.value })}
-        placeholder="Provide context for your request..."
-        rows={3}
-        style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border2)', background: 'var(--bg3)', color: 'var(--text)', fontSize: 13, resize: 'vertical', fontFamily: 'Arial', boxSizing: 'border-box', marginBottom: 20 }}
-      />
-
-      <div style={{ display: 'flex', gap: 10 }}>
-        <button onClick={handleSubmitRequest} disabled={requestingId === selectedPatient?.id}
-          style={{ padding: '10px 24px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
-          {requestingId === selectedPatient?.id ? 'Submitting...' : 'Submit Request'}
-        </button>
-        <button onClick={() => { setShowRequestModal(false); setSelectedPatient(null); }}
-          style={{ padding: '10px 16px', background: 'transparent', border: '1px solid var(--border2)', color: 'var(--text2)', borderRadius: 8, fontSize: 14, cursor: 'pointer' }}>
-          Cancel
-        </button>
+        {filteredPatients.length > 0 && (
+          <p style={styles.footerCount}>
+            Showing {filteredPatients.length} of {patients.length} patients
+          </p>
+        )}
       </div>
     </div>
-  </div>
-)}
-</div>
   );
 }
+
+const styles = {
+  page: { background: 'var(--bg)', minHeight: '100vh', fontFamily: 'Arial, sans-serif' },
+  container: { padding: '24px 32px', maxWidth: 1200, margin: '0 auto' },
+  headerRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
+  pageTitle: { fontSize: 22, fontWeight: 800, color: 'var(--text)', margin: 0 },
+  pageSubtitle: { fontSize: 13, color: 'var(--text2)', margin: '4px 0 0 0' },
+  addBtn: { padding: '10px 18px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 700 },
+  formBox: { background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 20, marginBottom: 20 },
+  formGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14, marginBottom: 16 },
+  formField: { display: 'flex', flexDirection: 'column', gap: 5 },
+  label: { fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5 },
+  input: { padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border2)', fontSize: 13, background: 'var(--bg3)', color: 'var(--text)', boxSizing: 'border-box' },
+  error: { color: 'var(--red)', fontSize: 13, marginBottom: 10 },
+  saveBtn: { padding: '9px 20px', background: 'var(--green)', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 700 },
+  cancelBtn: { padding: '9px 16px', background: 'transparent', color: 'var(--text2)', border: '1px solid var(--border2)', borderRadius: 8, cursor: 'pointer', fontSize: 13 },
+  searchBox: { display: 'flex', alignItems: 'center', gap: 10, background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: 10, padding: '0 14px', marginBottom: 14 },
+  searchIcon: { fontSize: 14, flexShrink: 0 },
+  searchInput: { flex: 1, padding: '11px 0', border: 'none', background: 'transparent', color: 'var(--text)', fontSize: 14, outline: 'none' },
+  filterRow: { display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' },
+  filterTab: { display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: 8, cursor: 'pointer', fontSize: 12, color: 'var(--text2)', fontWeight: 600 },
+  filterBadge: { padding: '1px 7px', borderRadius: 10, fontSize: 10, fontWeight: 700 },
+  loadingBox: { padding: 40, textAlign: 'center' },
+  emptyBox: { padding: '48px 24px', textAlign: 'center', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12 },
+  emptyIcon: { fontSize: 40, marginBottom: 12 },
+  emptyTitle: { fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: '0 0 6px 0' },
+  emptyDesc: { fontSize: 13, color: 'var(--text3)', margin: 0 },
+  tableWrap: { background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' },
+  table: { width: '100%', borderCollapse: 'collapse' },
+  thead: { background: 'var(--bg3)' },
+  th: { textAlign: 'left', padding: '12px 16px', fontSize: 11, color: 'var(--text3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: '2px solid var(--border)' },
+  tr: { borderBottom: '1px solid var(--border)' },
+  td: { padding: '13px 16px', fontSize: 13, color: 'var(--text)', verticalAlign: 'middle' },
+  nameCell: { display: 'flex', alignItems: 'center', gap: 10 },
+  avatar: { width: 34, height: 34, borderRadius: '50%', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, flexShrink: 0 },
+  patientName: { fontWeight: 700, color: 'var(--text)', fontSize: 13 },
+  cellText: { color: 'var(--text2)', fontSize: 13 },
+  noneText: { color: 'var(--text3)', fontSize: 13 },
+  diseaseBadge: { display: 'inline-block', background: 'var(--pbg)', color: 'var(--purple)', padding: '3px 10px', borderRadius: 8, fontSize: 11, fontWeight: 600, border: '1px solid var(--pborder)' },
+  hospitalText: { fontSize: 12, color: 'var(--text2)' },
+  badge: { padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700 },
+  badgeAssigned: { background: 'var(--bg4)', color: 'var(--accent)', border: '1px solid var(--border2)' },
+  badgeFull: { background: 'var(--gbg)', color: 'var(--green)', border: '1px solid var(--gborder)' },
+  badgePending: { background: 'var(--obg)', color: 'var(--orange)', border: '1px solid var(--oborder)' },
+  badgeLimited: { background: 'var(--rbg)', color: 'var(--red)', border: '1px solid var(--rborder)' },
+  actionRow: { display: 'flex', gap: 6 },
+  viewBtn: { padding: '6px 14px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 700 },
+  requestBtn: { padding: '6px 12px', background: 'var(--bg4)', color: 'var(--accent)', border: '1px solid var(--accent)', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 700 },
+  pendingBtn: { padding: '6px 12px', background: 'var(--obg)', color: 'var(--orange)', border: '1px solid var(--oborder)', borderRadius: 6, cursor: 'not-allowed', fontSize: 12, fontWeight: 700 },
+  deleteBtn: { padding: '6px 12px', background: 'var(--rbg)', color: 'var(--red)', border: '1px solid var(--rborder)', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 700 },
+  footerCount: { color: 'var(--text3)', fontSize: 12, marginTop: 12, textAlign: 'right' },
+};
