@@ -162,9 +162,9 @@ export default function DiseasesPage() {
 
         {/* Diseases List */}
         {loading ? (
-          <p style={{ color: '#888' }}>Loading diseases...</p>
+          <p style={{ color: 'var(--text3)' }}>Loading diseases...</p>
         ) : diseases.length === 0 ? (
-          <p style={{ color: '#888' }}>No diseases found. Add your first rare disease above.</p>
+          <p style={{ color: 'var(--text3)' }}>No diseases found. Add your first rare disease above.</p>
         ) : (
           <div style={styles.diseaseGrid}>
             {diseases.map((d) => (
@@ -206,13 +206,13 @@ export default function DiseasesPage() {
 }
 
 const styles = {
-  page: { fontFamily: 'Arial, sans-serif', background: '#f7f9fc', minHeight: '100vh' },
+  page: { fontFamily: 'Arial, sans-serif', background: 'var(--bg)', minHeight: '100vh' },
   topBar: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '16px 32px',
-    background: '#fff',
+    background: 'var(--card)',
     borderBottom: '1px solid #e5e5e5',
   },
   logo: { color: '#2c7be5', margin: 0, fontSize: 22 },
@@ -220,7 +220,7 @@ const styles = {
   userName: { color: '#444', fontSize: 14 },
   navBtn: {
     padding: '8px 16px',
-    background: '#f0f4ff',
+    background: 'var(--bg3)',
     border: '1px solid #2c7be5',
     color: '#2c7be5',
     borderRadius: 6,
@@ -229,7 +229,7 @@ const styles = {
   },
   logoutBtn: {
     padding: '8px 16px',
-    background: '#fff',
+    background: 'var(--card)',
     border: '1px solid #ddd',
     borderRadius: 6,
     cursor: 'pointer',
@@ -257,7 +257,7 @@ const styles = {
     boxSizing: 'border-box',
   },
   formBox: {
-    background: '#fff',
+    background: 'var(--card)',
     padding: 24,
     borderRadius: 8,
     marginBottom: 24,
@@ -295,7 +295,7 @@ const styles = {
     fontWeight: 'bold',
   },
   detailPanel: {
-    background: '#fff',
+    background: 'var(--card)',
     padding: 24,
     borderRadius: 8,
     border: '2px solid #2c7be5',
@@ -304,18 +304,18 @@ const styles = {
   detailHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 },
   closeBtn: {
     padding: '6px 14px',
-    background: '#fff',
+    background: 'var(--card)',
     border: '1px solid #ddd',
     borderRadius: 6,
     cursor: 'pointer',
     fontSize: 13,
   },
   detailSection: { marginBottom: 12 },
-  detailLabel: { color: '#888', fontSize: 12, margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: 1 },
-  detailValue: { color: '#333', fontSize: 14, margin: 0, lineHeight: 1.6 },
+  detailLabel: { color: 'var(--text3)', fontSize: 12, margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: 1 },
+  detailValue: { color: 'var(--text)', fontSize: 14, margin: 0, lineHeight: 1.6 },
   icdBadge: {
     display: 'inline-block',
-    background: '#e8f0fe',
+    background: 'var(--bg4)',
     color: '#2c7be5',
     padding: '2px 10px',
     borderRadius: 12,
@@ -324,7 +324,7 @@ const styles = {
   },
   diseaseGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 },
   diseaseCard: {
-    background: '#fff',
+    background: 'var(--card)',
     padding: 20,
     borderRadius: 8,
     cursor: 'default',
@@ -332,10 +332,10 @@ const styles = {
   },
   cardTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 },
   diseaseName: { fontWeight: 'bold', fontSize: 15, color: '#222', margin: 0 },
-  diseaseDesc: { color: '#666', fontSize: 13, lineHeight: 1.5, marginBottom: 12 },
+  diseaseDesc: { color: 'var(--text2)', fontSize: 13, lineHeight: 1.5, marginBottom: 12 },
   viewBtn: {
     padding: '6px 14px',
-    background: '#f0f4ff',
+    background: 'var(--bg3)',
     color: '#2c7be5',
     border: '1px solid #2c7be5',
     borderRadius: 5,
