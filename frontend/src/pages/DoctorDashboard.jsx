@@ -1,20 +1,12 @@
-  import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import API from '../api/axios';
-import {
-  RecordsByTypeChart,
-  MonthlyPatientsChart,
-} from '../components/DashboardCharts';
-
-const STATUS_STYLES = {
-  Pending:  { bg: '#fffbeb', color: '#d97706' },
-  Approved: { bg: '#f0fff4', color: '#22c55e' },
-  Rejected: { bg: '#fff0f0', color: '#e53e3e' },
-};
+import Sidebar from '../components/Sidebar';
+import { RecordsByTypeChart, MonthlyPatientsChart } from '../components/DashboardCharts';
 
 export default function DoctorDashboard() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [myRequests, setMyRequests] = useState([]);
@@ -23,231 +15,150 @@ export default function DoctorDashboard() {
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        const [dashRes, reqRes] = await Promise.all([
-          API.get('/dashboard'),
-          API.get('/access/my-requests'),
-        ]);
+        const [dashRes, reqRes] = await Promise.all([API.get('/dashboard'), API.get('/access/my-requests')]);
         setData(dashRes.data);
         setMyRequests(reqRes.data.slice(0, 5));
-      } catch (err) {
-        console.error('Dashboard load failed');
-      } finally {
-        setLoading(false);
-      }
+      } catch (err) { console.error('Dashboard load failed'); }
+      finally { setLoading(false); }
     };
     fetchAll();
   }, []);
 
+  const { stats, records_by_type, monthly_patients, recent_patients } = data || {};
+  const userName = user?.name?.startsWith('Dr.') ? user?.name : 'Dr. ' + user?.name;
+
   if (loading) return (
-    <div style={{ padding: 32, fontFamily: 'Arial' }}>
-      <h2 style={{ color: '#2c7be5' }}>RareSync</h2>
-      <p>Loading dashboard...</p>
+    <div style={{ display: 'flex', minHeight: '100vh' }}>
+      <Sidebar />
+      <div style={{ marginLeft: 240, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)' }}>
+        <p style={{ color: 'var(--text2)' }}>Loading dashboard...</p>
+      </div>
     </div>
   );
 
-  const { stats, records_by_type, monthly_patients, recent_patients } = data || {};
-
   return (
-    <div style={styles.page}>
-      {/* Top Bar */}
-      <div style={styles.topBar}>
-        <h1 style={styles.logo}>RareSync</h1>
-        <div style={styles.topRight}>
-          <span style={styles.userName}>Dr. {user?.name}</span>
-          <button onClick={() => navigate('/patients')} style={styles.navBtn}>Patients</button>
-          <button onClick={() => navigate('/diseases')} style={styles.navBtn}>Diseases</button>
-          <button onClick={() => navigate('/access-requests')} style={styles.navBtn}>Access Requests</button>
-          <button onClick={() => { logout(); navigate('/login'); }} style={styles.logoutBtn}>Logout</button>
-        </div>
-      </div>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
+      <Sidebar />
+      <div style={{ marginLeft: 240, flex: 1, padding: '28px 32px', overflowY: 'auto' }}>
 
-      <div style={styles.container}>
-        {/* Header */}
-        <div style={styles.headerRow}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
           <div>
-            <h2 style={{ margin: 0 }}>Doctor Dashboard</h2>
-            <p style={{ color: '#888', margin: '4px 0 0 0', fontSize: 14 }}>
-              Welcome back, Dr. {user?.name} · {user?.specialization || 'General'}
-            </p>
+            <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text)', margin: 0 }}>Doctor Dashboard</h2>
+            <p style={{ color: 'var(--text2)', fontSize: 14, margin: '4px 0 0 0' }}>Welcome back, {userName} · {user?.specialization || 'General'}</p>
           </div>
-          <span style={styles.dateBadge}>
-            {new Date().toLocaleDateString('en-US', {
-              weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-            })}
-          </span>
+          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 16px' }}>
+            <span style={{ color: 'var(--text3)', fontSize: 13 }}>{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+          </div>
         </div>
 
-        {/* Stats */}
-        <div style={styles.statsGrid}>
-          <StatCard label="Total Patients"     value={stats?.patients}    emoji="👤" color="#2c7be5" bg="#f0f4ff" onClick={() => navigate('/patients')} />
-          <StatCard label="Rare Diseases"      value={stats?.diseases}    emoji="🧬" color="#7c3aed" bg="#f9f0ff" onClick={() => navigate('/diseases')} />
-          <StatCard label="Medical Records"    value={stats?.records}     emoji="📋" color="#22c55e" bg="#f0fff4" />
-          <StatCard label="My Access Requests" value={myRequests.length}  emoji="🔐" color="#d97706" bg="#fffbeb" onClick={() => navigate('/access-requests')} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
+          <StatCard label="Total Patients"     value={stats?.patients}   icon="👥" color="#4f7fff" onClick={() => navigate('/patients')} />
+          <StatCard label="Rare Diseases"      value={stats?.diseases}   icon="🧬" color="#a855f7" onClick={() => navigate('/diseases')} />
+          <StatCard label="Medical Records"    value={stats?.records}    icon="📋" color="#22c55e" />
+          <StatCard label="My Access Requests" value={myRequests.length} icon="🔐" color="#f59e0b" onClick={() => navigate('/access-requests')} />
         </div>
 
-        {/* Charts */}
-        <div style={styles.chartsGrid}>
-          <MonthlyPatientsChart data={monthly_patients} />
-          <RecordsByTypeChart data={records_by_type} />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+          <div style={{ background: 'var(--card)', borderRadius: 12, padding: 20, border: '1px solid var(--border)' }}>
+            <MonthlyPatientsChart data={monthly_patients} />
+          </div>
+          <div style={{ background: 'var(--card)', borderRadius: 12, padding: 20, border: '1px solid var(--border)' }}>
+            <RecordsByTypeChart data={records_by_type} />
+          </div>
         </div>
 
-        {/* Bottom Row */}
-        <div style={styles.twoCol}>
-          {/* Recent Patients */}
-          <div style={styles.panel}>
-            <div style={styles.panelHeader}>
-              <h3 style={{ margin: 0 }}>Recent Patients</h3>
-              <button onClick={() => navigate('/patients')} style={styles.seeAllBtn}>See All</button>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+          <div style={{ background: 'var(--card)', borderRadius: 12, padding: 20, border: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Recent Patients</h3>
+              <button onClick={() => navigate('/patients')} style={S.seeAllBtn}>See All</button>
             </div>
-            {!recent_patients?.length ? (
-              <p style={{ color: '#999', fontSize: 14 }}>No patients yet.</p>
-            ) : (
+            {!recent_patients?.length ? <p style={{ color: 'var(--text3)', fontSize: 14 }}>No patients yet.</p> : (
               recent_patients.map((p) => (
-                <div key={p.id} onClick={() => navigate(`/patients/${p.id}`)} style={styles.patientRow}>
-                  <div style={styles.patientAvatar}>{p.name.charAt(0).toUpperCase()}</div>
+                <div key={p.id} onClick={() => navigate('/patients/' + p.id)} style={S.listRow}>
+                  <div style={S.avatar}>{p.name.charAt(0).toUpperCase()}</div>
                   <div style={{ flex: 1 }}>
-                    <p style={styles.patientName}>{p.name}</p>
-                    <p style={styles.patientMeta}>{p.gender || 'Unknown'} · {p.blood_group || 'N/A'}</p>
+                    <p style={S.rowTitle}>{p.name}</p>
+                    <p style={S.rowSub}>{p.gender || 'Unknown'} · {p.blood_group || 'N/A'}</p>
                   </div>
-                  <span style={styles.patientDate}>{new Date(p.created_at).toLocaleDateString()}</span>
+                  <span style={S.rowDate}>{new Date(p.created_at).toLocaleDateString()}</span>
                 </div>
               ))
             )}
           </div>
 
-          {/* My Access Requests */}
-          <div style={styles.panel}>
-            <div style={styles.panelHeader}>
-              <h3 style={{ margin: 0 }}>My Access Requests</h3>
-              <button onClick={() => navigate('/access-requests')} style={styles.seeAllBtn}>See All</button>
+          <div style={{ background: 'var(--card)', borderRadius: 12, padding: 20, border: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>My Access Requests</h3>
+              <button onClick={() => navigate('/access-requests')} style={S.seeAllBtn}>See All</button>
             </div>
             {myRequests.length === 0 ? (
               <div>
-                <p style={{ color: '#999', fontSize: 14 }}>No access requests yet.</p>
-                <button onClick={() => navigate('/access-requests')} style={styles.requestBtn}>
-                  + Request Patient Access
-                </button>
+                <p style={{ color: 'var(--text3)', fontSize: 14, marginBottom: 12 }}>No access requests yet.</p>
+                <button onClick={() => navigate('/access-requests')} style={S.actionBtn}>+ Request Patient Access</button>
               </div>
-            ) : (
-              myRequests.map((r) => {
-                const st = STATUS_STYLES[r.status] || STATUS_STYLES.Pending;
-                return (
-                  <div key={r.id} style={styles.requestRow}>
-                    <div style={{ flex: 1 }}>
-                      <p style={styles.requestPatient}>{r.patient_name}</p>
-                      <p style={styles.requestHospital}>{r.hospital_name}</p>
-                    </div>
-                    <span style={{ ...styles.statusBadge, background: st.bg, color: st.color }}>
-                      {r.status}
-                    </span>
+            ) : myRequests.map((r) => {
+              const st = { Pending: { bg: 'var(--obg)', color: 'var(--orange)' }, Approved: { bg: 'var(--gbg)', color: 'var(--green)' }, Rejected: { bg: 'var(--rbg)', color: 'var(--red)' } }[r.status] || {};
+              return (
+                <div key={r.id} style={S.listRow}>
+                  <div style={{ flex: 1 }}>
+                    <p style={S.rowTitle}>{r.patient_name}</p>
+                    <p style={S.rowSub}>{r.hospital_name}</p>
                   </div>
-                );
-              })
-            )}
+                  <span style={{ ...S.badge, background: st.bg, color: st.color }}>{r.status}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div style={styles.panel}>
-          <h3 style={{ margin: '0 0 16px 0' }}>Quick Actions</h3>
-          <div style={styles.quickGrid}>
-            <QuickAction label="Add Patient"    emoji="➕" desc="Register a new patient"    onClick={() => navigate('/patients')}        color="#2c7be5" />
-            <QuickAction label="View Diseases"  emoji="🧬" desc="Browse rare diseases"      onClick={() => navigate('/diseases')}        color="#7c3aed" />
-            <QuickAction label="Request Access" emoji="🔐" desc="Request patient access"    onClick={() => navigate('/access-requests')} color="#d97706" />
-            <QuickAction label="Add Disease"    emoji="📝" desc="Add a new rare disease"    onClick={() => navigate('/diseases')}        color="#22c55e" />
+        <div style={{ background: 'var(--card)', borderRadius: 12, padding: 20, border: '1px solid var(--border)' }}>
+          <h3 style={{ margin: '0 0 16px 0', fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Quick Actions</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+            {[
+              { label: 'Add Patient', icon: '➕', desc: 'Register a new patient', path: '/patients', color: '#4f7fff' },
+              { label: 'View Diseases', icon: '🧬', desc: 'Browse rare diseases', path: '/diseases', color: '#a855f7' },
+              { label: 'Request Access', icon: '🔐', desc: 'Request patient access', path: '/access-requests', color: '#f59e0b' },
+              { label: 'My Requests', icon: '📋', desc: 'View specialist requests', path: '/specialist-requests', color: '#22c55e' },
+            ].map((a) => (
+              <div key={a.label} onClick={() => navigate(a.path)}
+                style={{ padding: 16, background: 'var(--bg3)', borderRadius: 10, border: '1px solid var(--border)', cursor: 'pointer' }}>
+                <span style={{ fontSize: 24 }}>{a.icon}</span>
+                <p style={{ fontWeight: 700, color: a.color, margin: '8px 0 4px 0', fontSize: 13 }}>{a.label}</p>
+                <p style={{ color: 'var(--text3)', fontSize: 12, margin: 0 }}>{a.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
-
       </div>
     </div>
   );
 }
 
-function StatCard({ label, value, emoji, color, bg, onClick }) {
+function StatCard({ label, value, icon, color, onClick }) {
   return (
-    <div onClick={onClick} style={{
-      background: bg, borderRadius: 10, padding: '20px 24px',
-      border: `1px solid ${color}30`, cursor: onClick ? 'pointer' : 'default',
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div onClick={onClick}
+      style={{ background: 'var(--card)', borderRadius: 12, padding: '20px 24px', border: '1px solid var(--border)', cursor: onClick ? 'pointer' : 'default' }}
+      onMouseEnter={(e) => { if (onClick) e.currentTarget.style.borderColor = color; }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <p style={{ fontSize: 28, fontWeight: 'bold', color, margin: 0 }}>{value ?? '-'}</p>
-          <p style={{ fontSize: 13, color, margin: '4px 0 0 0' }}>{label}</p>
+          <p style={{ fontSize: 30, fontWeight: 800, color, margin: 0 }}>{value ?? '-'}</p>
+          <p style={{ fontSize: 13, color: 'var(--text2)', margin: '6px 0 0 0' }}>{label}</p>
         </div>
-        <span style={{ fontSize: 28 }}>{emoji}</span>
+        <div style={{ width: 42, height: 42, borderRadius: 10, background: color + '20', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>{icon}</div>
       </div>
     </div>
   );
 }
 
-function QuickAction({ label, emoji, desc, onClick, color }) {
-  return (
-    <div onClick={onClick} style={{
-      padding: '16px 20px', background: '#f7f9fc', borderRadius: 8,
-      border: `1px solid ${color}30`, cursor: 'pointer',
-    }}>
-      <span style={{ fontSize: 24 }}>{emoji}</span>
-      <p style={{ fontWeight: 'bold', color, margin: '8px 0 4px 0', fontSize: 14 }}>{label}</p>
-      <p style={{ color: '#888', fontSize: 12, margin: 0 }}>{desc}</p>
-    </div>
-  );
-}
-
-const styles = {
-  page: { fontFamily: 'Arial, sans-serif', background: '#f7f9fc', minHeight: '100vh' },
-  topBar: {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    padding: '16px 32px', background: '#fff', borderBottom: '1px solid #e5e5e5',
-    position: 'sticky', top: 0, zIndex: 100,
-  },
-  logo: { color: '#2c7be5', margin: 0, fontSize: 22, fontWeight: 'bold' },
-  topRight: { display: 'flex', alignItems: 'center', gap: 10 },
-  userName: { color: '#444', fontSize: 14, marginRight: 4 },
-  navBtn: {
-    padding: '7px 14px', background: '#f0f4ff', border: '1px solid #2c7be5',
-    color: '#2c7be5', borderRadius: 6, cursor: 'pointer', fontSize: 13,
-  },
-  logoutBtn: {
-    padding: '7px 14px', background: '#fff', border: '1px solid #ddd',
-    borderRadius: 6, cursor: 'pointer', fontSize: 13,
-  },
-  container: { padding: '24px 32px', maxWidth: 1200, margin: '0 auto' },
-  headerRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
-  dateBadge: {
-    color: '#888', fontSize: 13, background: '#fff',
-    padding: '8px 14px', borderRadius: 8, border: '1px solid #eee',
-  },
-  statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 },
-  chartsGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 },
-  twoCol: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 },
-  panel: { background: '#fff', borderRadius: 10, padding: 20, border: '1px solid #eee', marginBottom: 16 },
-  panelHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  seeAllBtn: {
-    padding: '5px 12px', background: '#f0f4ff', color: '#2c7be5',
-    border: '1px solid #2c7be5', borderRadius: 6, cursor: 'pointer', fontSize: 12,
-  },
-  patientRow: {
-    display: 'flex', alignItems: 'center', gap: 12,
-    padding: '10px 0', borderBottom: '1px solid #f5f5f5', cursor: 'pointer',
-  },
-  patientAvatar: {
-    width: 36, height: 36, borderRadius: '50%', background: '#2c7be5',
-    color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontWeight: 'bold', fontSize: 16, flexShrink: 0,
-  },
-  patientName: { fontWeight: '600', fontSize: 14, color: '#222', margin: 0 },
-  patientMeta: { color: '#888', fontSize: 12, margin: '2px 0 0 0' },
-  patientDate: { color: '#bbb', fontSize: 12 },
-  requestRow: {
-    display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
-    padding: '10px 0', borderBottom: '1px solid #f5f5f5', gap: 12,
-  },
-  requestPatient: { fontWeight: '600', fontSize: 14, color: '#222', margin: 0 },
-  requestHospital: { color: '#888', fontSize: 12, margin: '2px 0 0 0' },
-  statusBadge: { padding: '3px 10px', borderRadius: 12, fontSize: 11, fontWeight: 'bold', flexShrink: 0 },
-  requestBtn: {
-    marginTop: 10, padding: '8px 16px', background: '#2c7be5', color: '#fff',
-    border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13,
-  },
-  quickGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 },
+const S = {
+  seeAllBtn: { padding: '5px 12px', background: 'transparent', color: 'var(--accent)', border: '1px solid var(--accent)', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 600 },
+  listRow: { display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)', cursor: 'pointer' },
+  avatar: { width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, #4f7fff, #7c3aed)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 14, flexShrink: 0 },
+  rowTitle: { fontWeight: 700, fontSize: 14, color: 'var(--text)', margin: 0 },
+  rowSub: { color: 'var(--text3)', fontSize: 12, margin: '2px 0 0 0' },
+  rowDate: { color: 'var(--text3)', fontSize: 12, flexShrink: 0 },
+  badge: { padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, flexShrink: 0 },
+  actionBtn: { padding: '9px 18px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 700 },
 };
