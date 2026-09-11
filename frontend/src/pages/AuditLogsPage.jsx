@@ -61,7 +61,7 @@ export default function AuditLogsPage() {
         <div style={styles.headerRow}>
           <div>
             <h2 style={{ margin: 0 }}>Audit Logs</h2>
-            <p style={{ color: '#888', fontSize: 13, margin: '4px 0 0 0' }}>
+            <p style={{ color: 'var(--text3)', fontSize: 13, margin: '4px 0 0 0' }}>
               Last 100 actions in your hospital
             </p>
           </div>
@@ -86,7 +86,7 @@ export default function AuditLogsPage() {
 
         {/* Logs Table */}
         {loading ? (
-          <p style={{ color: '#888' }}>Loading logs...</p>
+          <p style={{ color: 'var(--text3)' }}>Loading logs...</p>
         ) : filtered.length === 0 ? (
           <p style={{ color: '#999' }}>No audit logs found.</p>
         ) : (
@@ -155,10 +155,10 @@ function StatCard({ label, value, color, bg }) {
 }
 
 const styles = {
-  page: { fontFamily: 'Arial, sans-serif', background: '#f7f9fc', minHeight: '100vh' },
+  page: { fontFamily: 'Arial, sans-serif', background: 'var(--bg)', minHeight: '100vh' },
   topBar: {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    padding: '16px 32px', background: '#fff', borderBottom: '1px solid #e5e5e5',
+    padding: '16px 32px', background: 'var(--card)', borderBottom: '1px solid #e5e5e5',
   },
   logo: { color: '#2c7be5', margin: 0, fontSize: 22 },
   topRight: { display: 'flex', alignItems: 'center', gap: 10 },
@@ -168,13 +168,13 @@ const styles = {
     color: '#2c7be5', borderRadius: 6, cursor: 'pointer', fontSize: 13,
   },
   logoutBtn: {
-    padding: '7px 14px', background: '#fff', border: '1px solid #ddd',
+    padding: '7px 14px', background: 'var(--card)', border: '1px solid #ddd',
     borderRadius: 6, cursor: 'pointer', fontSize: 13,
   },
   container: { padding: '24px 32px', maxWidth: 1200, margin: '0 auto' },
   headerRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
   refreshBtn: {
-    padding: '8px 16px', background: '#fff', border: '1px solid #ddd',
+    padding: '8px 16px', background: 'var(--card)', border: '1px solid #ddd',
     borderRadius: 6, cursor: 'pointer', fontSize: 13, color: '#555',
   },
   statsRow: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 12, marginBottom: 20 },
@@ -182,12 +182,12 @@ const styles = {
     width: '100%', padding: '10px 14px', borderRadius: 6, border: '1px solid #ddd',
     marginBottom: 20, fontSize: 14, boxSizing: 'border-box',
   },
-  tableWrap: { overflowX: 'auto', borderRadius: 8, border: '1px solid #eee' },
-  table: { width: '100%', borderCollapse: 'collapse', background: '#fff' },
+  tableWrap: { overflowX: 'auto', borderRadius: 8, border: '1px solid var(--border)' },
+  table: { width: '100%', borderCollapse: 'collapse', background: 'var(--card)' },
   theadRow: { background: '#f0f4ff' },
   th: { textAlign: 'left', padding: '12px 14px', fontSize: 12, color: '#555', borderBottom: '2px solid #e5e5e5', whiteSpace: 'nowrap' },
-  tr: { borderBottom: '1px solid #f0f0f0' },
-  td: { padding: '11px 14px', fontSize: 13, color: '#333' },
+  tr: { borderBottom: '1px solid var(--border)' },
+  td: { padding: '11px 14px', fontSize: 13, color: 'var(--text)' },
   actionBadge: { padding: '3px 10px', borderRadius: 12, fontSize: 11, fontWeight: 'bold', whiteSpace: 'nowrap' },
   roleBadge: { padding: '2px 10px', borderRadius: 12, fontSize: 11, fontWeight: '500' },
 };
