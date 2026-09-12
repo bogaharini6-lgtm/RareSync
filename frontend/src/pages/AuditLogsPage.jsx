@@ -105,7 +105,7 @@ export default function AuditLogsPage() {
               </thead>
               <tbody>
                 {filtered.map((log, index) => {
-                  const ac = ACTION_COLORS[log.action] || { bg: '#f5f5f5', color: '#555' };
+                  const ac = ACTION_COLORS[log.action] || { bg: '#f5f5f5', color: 'var(--text2)' };
                   return (
                     <tr key={log.id} style={{ ...styles.tr, background: index % 2 === 0 ? '#fff' : '#fafafa' }}>
                       <td style={styles.td}>{log.id}</td>
@@ -162,30 +162,30 @@ const styles = {
   },
   logo: { color: '#2c7be5', margin: 0, fontSize: 22 },
   topRight: { display: 'flex', alignItems: 'center', gap: 10 },
-  userName: { color: '#444', fontSize: 14, marginRight: 4 },
+  userName: { color: 'var(--text2)', fontSize: 14, marginRight: 4 },
   navBtn: {
     padding: '7px 14px', background: '#f0f4ff', border: '1px solid #2c7be5',
     color: '#2c7be5', borderRadius: 6, cursor: 'pointer', fontSize: 13,
   },
   logoutBtn: {
-    padding: '7px 14px', background: 'var(--card)', border: '1px solid #ddd',
+    padding: '7px 14px', background: 'var(--card)', border: '1px solid var(--border2)',
     borderRadius: 6, cursor: 'pointer', fontSize: 13,
   },
   container: { padding: '24px 32px', maxWidth: 1200, margin: '0 auto' },
   headerRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
   refreshBtn: {
-    padding: '8px 16px', background: 'var(--card)', border: '1px solid #ddd',
-    borderRadius: 6, cursor: 'pointer', fontSize: 13, color: '#555',
+    padding: '8px 16px', background: 'var(--card)', border: '1px solid var(--border2)',
+    borderRadius: 6, cursor: 'pointer', fontSize: 13, color: 'var(--text2)',
   },
   statsRow: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 12, marginBottom: 20 },
   searchInput: {
-    width: '100%', padding: '10px 14px', borderRadius: 6, border: '1px solid #ddd',
+    width: '100%', padding: '10px 14px', borderRadius: 6, border: '1px solid var(--border2)',
     marginBottom: 20, fontSize: 14, boxSizing: 'border-box',
   },
   tableWrap: { overflowX: 'auto', borderRadius: 8, border: '1px solid var(--border)' },
   table: { width: '100%', borderCollapse: 'collapse', background: 'var(--card)' },
   theadRow: { background: '#f0f4ff' },
-  th: { textAlign: 'left', padding: '12px 14px', fontSize: 12, color: '#555', borderBottom: '2px solid #e5e5e5', whiteSpace: 'nowrap' },
+  th: { textAlign: 'left', padding: '12px 14px', fontSize: 12, color: 'var(--text2)', borderBottom: '2px solid var(--border)', whiteSpace: 'nowrap' },
   tr: { borderBottom: '1px solid var(--border)' },
   td: { padding: '11px 14px', fontSize: 13, color: 'var(--text)' },
   actionBadge: { padding: '3px 10px', borderRadius: 12, fontSize: 11, fontWeight: 'bold', whiteSpace: 'nowrap' },
