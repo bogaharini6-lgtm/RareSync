@@ -107,7 +107,7 @@ export default function AuditLogsPage() {
                 {filtered.map((log, index) => {
                   const ac = ACTION_COLORS[log.action] || { bg: '#f5f5f5', color: 'var(--text2)' };
                   return (
-                    <tr key={log.id} style={{ ...styles.tr, background: index % 2 === 0 ? '#fff' : '#fafafa' }}>
+                    <tr key={log.id} style={{ ...styles.tr, background: index % 2 === 0 ? 'var(--bg2)' : 'var(--bg3)' }}>
                       <td style={styles.td}>{log.id}</td>
                       <td style={styles.td}>
                         <span style={{ ...styles.actionBadge, background: ac.bg, color: ac.color }}>
@@ -118,7 +118,7 @@ export default function AuditLogsPage() {
                       <td style={styles.td}>
                         <span style={{
                           ...styles.roleBadge,
-                          background: log.actor_type === 'doctor' ? '#f0f4ff' : '#f9f0ff',
+                          background: log.actor_type === 'doctor' ? 'var(--bg4)' : 'var(--pbg)',
                           color: log.actor_type === 'doctor' ? '#2c7be5' : '#7c3aed',
                         }}>
                           {log.actor_type}
