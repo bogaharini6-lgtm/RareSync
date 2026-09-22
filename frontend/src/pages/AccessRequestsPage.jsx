@@ -76,7 +76,8 @@ export default function AccessRequestsPage() {
   const fetchPatients = async () => {
     try {
       const { data } = await API.get('/patients');
-      setPatients(data.filter(p => p.access_status === 'none' || p.access_status === 'pending'));
+      const patientList = Array.isArray(data) ? data : (data.patients || []);
+      setPatients(patientList.filter(p => p.access_status === 'none' || p.access_status === 'pending'));
     } catch (err) {
       console.error('Could not load patients');
     }
