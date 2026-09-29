@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [otpError, setOtpError] = useState('');
   const [resendTimer, setResendTimer] = useState(0);
   const [resending, setResending] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [form, setForm] = useState({
   name: '', email: '', password: '',
@@ -191,7 +192,24 @@ export default function LoginPage() {
               <form onSubmit={handleSubmit}>
                 {isRegister && <input style={styles.input} name="name" placeholder="Full Name" value={form.name} onChange={handleChange} required />}
                 <input style={styles.input} name="email" type="email" placeholder="Email address" value={form.email} onChange={handleChange} required />
-                <input style={styles.input} name="password" type="password" placeholder="Password" value={form.password} onChange={handleChange} required />
+                <div style={{ position: 'relative', marginBottom: 12 }}>
+  <input
+    style={{ ...styles.input, marginBottom: 0, paddingRight: 44 }}
+    name="password"
+    type={showPassword ? 'text' : 'password'}
+    placeholder="Password"
+    value={form.password}
+    onChange={handleChange}
+    required
+  />
+  <button
+    type="button"
+    onClick={() => setShowPassword(!showPassword)}
+    style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--text3)' }}
+  >
+    {showPassword ? '🙈' : '👁️'}
+  </button>
+</div>
 
                 {isRegister && activeTab === 'doctor' && (
                   <>
