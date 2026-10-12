@@ -1,12 +1,10 @@
 ﻿import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
   withCredentials: true,
 });
 
-// Token is now sent automatically via httpOnly cookie
-// No need to manually attach it from localStorage
 API.interceptors.request.use((req) => {
   return req;
 });
