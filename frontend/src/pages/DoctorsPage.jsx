@@ -71,8 +71,8 @@ export default function DoctorsPage() {
                         </div>
                       </div>
                     </td>
-                    <td style={{ padding: '13px 16px', fontSize: 13, color: 'var(--text2)' }}>{d.specialization || '—'}</td>
-                    <td style={{ padding: '13px 16px', fontSize: 13, color: 'var(--text2)' }}>{d.phone || '—'}</td>
+                    <td style={{ padding: '13px 16px', fontSize: 13, color: 'var(--text2)' }}>{d.specialization || 'â€”'}</td>
+                    <td style={{ padding: '13px 16px', fontSize: 13, color: 'var(--text2)' }}>{d.phone || 'â€”'}</td>
                     <td style={{ padding: '13px 16px', fontSize: 13, color: 'var(--text2)' }}>{d.email}</td>
                     <td style={{ padding: '13px 16px', fontSize: 13, color: 'var(--text2)' }}>
                       {new Date(d.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
